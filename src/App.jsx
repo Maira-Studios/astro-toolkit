@@ -1,10 +1,11 @@
-// src/App.jsx
+// src/App.jsx (or your main application file)
 import React, { useState } from 'react';
+import { ChakraProvider } from '@chakra-ui/react';
 import VastuCalculator from './pages/VastuCalculator';
 import Sidebar from './components/layout/Sidebar.jsx';
 import MainNavigation from './components/layout/MainNavigation.jsx';
 
-// Mock data for navigation items - replace with your actual routes
+// Your existing navigation items
 const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', path: '/' },
   {
@@ -53,7 +54,6 @@ const App = () => {
       return (
         <VastuCalculator
           openSidebar={openRightSidebar}
-          sidebarOpen={rightSidebarOpen}
         />
       );
     }
@@ -61,6 +61,7 @@ const App = () => {
   };
 
   return (
+
     <div className="flex h-screen bg-gray-100">
       {/* Fixed left navigation */}
       <MainNavigation
@@ -87,6 +88,7 @@ const App = () => {
         </Sidebar>
       )}
     </div>
+
   );
 };
 
