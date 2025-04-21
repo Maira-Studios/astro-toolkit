@@ -3,13 +3,11 @@ import React, { useState, useEffect } from 'react';
 
 import ResultsTable from "../components/results/ResultsTable.jsx";
 import TabSelector from '../components/common/TabSelector.jsx';
-import PlanetInput from "../components/input/PlanetInput.jsx"
-import HouseInput from "../components/input/HouseInput.jsx"
-import PlanetAdjuster from "../components/input/PlanetAdjuster.jsx"
+import PlanetInput from "../components/input/PlanetInput.jsx";
+import HouseInput from "../components/input/HouseInput.jsx";
+import PlanetAdjuster from "../components/input/PlanetAdjuster.jsx";
 
-
-
-const VastuCalculator = () => {
+const VastuCalculator = ({ openSidebar }) => {
     // State for planets and houses
     const [planets, setPlanets] = useState([
         { id: 'asc', name: 'Ascendant', position: '115-51', canHit: true },
@@ -39,21 +37,15 @@ const VastuCalculator = () => {
         { number: 12, position: '086-40' }
     ]);
 
-    // State for input section tabs
-    const [activeInputTab, setActiveInputTab] = useState('planets');
-    const inputTabs = [
-        { id: 'planets', label: 'Planet Inputs' },
-        { id: 'houses', label: 'House Inputs' },
-        { id: 'adjust', label: 'Adjust Planets' }
+    // State for relationship type tabs in main view
+    const [activeRelationshipTab, setActiveRelationshipTab] = useState('planet-house');
+    const relationshipTabs = [
+        { id: 'planet-house', label: 'Planet → House' },
+        { id: 'planet-planet', label: 'Planet → Planet' }
     ];
 
-    // State for results section tabs
-    const [activeResultTab, setActiveResultTab] = useState('original');
-    const resultTabs = [
-        { id: 'original', label: 'Original Table' },
-        { id: 'corrected', label: 'Corrected Table' },
-        { id: 'comparison', label: 'Comparison' }
-    ];
+    // State for results view mode
+    const [resultViewMode, setResultViewMode] = useState('original');
 
     // State for original planets (for comparison)
     const [originalPlanets, setOriginalPlanets] = useState([]);
@@ -88,106 +80,142 @@ const VastuCalculator = () => {
             // Store the original planets for comparison
             setOriginalPlanets(planets.map(planet => ({ ...planet, originalPosition: planet.position })));
             setIsCalculated(true);
-        } else {
-            // If already calculated, just update the corrected state
-            setActiveResultTab('corrected');
         }
     };
 
-    // Effect to switch to corrected tab when adjusting planets after calculation
+    // Open planet input sidebar
+    const openPlanetInputSidebar = () => {
+        openSidebar({
+            title: 'Planet Inputs',
+            content: (
+                <div className="grid grid-cols-1 gap-4">
+                    {planets.map(planet => (
+                        <PlanetInput
+                            key={planet.id}
+                            planet={planet}
+                            onChange={handlePlanetPositionChange}
+                        />
+                    ))}
+                </div>
+            )
+        });
+    };
+
+    // Open house input sidebar
+    const openHouseInputSidebar = () => {
+        openSidebar({
+            title: 'House Inputs',
+            content: (
+                <div className="grid grid-cols-1 gap-4">
+                    {houses.map(house => (
+                        <HouseInput
+                            key={house.number}
+                            house={house}
+                            onChange={handleHousePositionChange}
+                        />
+                    ))}
+                </div>
+            )
+        });
+    };
+
+    // Open planet adjuster sidebar
+    const openAdjusterSidebar = () => {
+        openSidebar({
+            title: 'Adjust Planets',
+            content: (
+                <PlanetAdjuster
+                    planets={planets}
+                    houses={houses}
+                    onPlanetAdjusted={handlePlanetAdjustment}
+                />
+            )
+        });
+    };
+
+    // Effect to update original planets when isCalculated changes
     useEffect(() => {
-        if (isCalculated && activeInputTab === 'adjust') {
-            setActiveResultTab('corrected');
+        if (isCalculated && originalPlanets.length === 0) {
+            setOriginalPlanets(planets.map(planet => ({ ...planet, originalPosition: planet.position })));
         }
-    }, [planets, isCalculated, activeInputTab]);
+    }, [isCalculated, planets, originalPlanets.length]);
 
     return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-bold mb-6">Astro Vastu Hit Table</h1>
+        <div className="w-full h-full flex flex-col">
+            {/* Header area with title and action buttons */}
+            <header className="bg-white border-b p-4">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-bold">Astro Vastu Hit Table</h1>
 
-            {/* Section 1: Inputs & Adjustments */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold mb-4">Data & Adjustments</h2>
-
-                <TabSelector
-                    tabs={inputTabs}
-                    activeTab={activeInputTab}
-                    onTabChange={setActiveInputTab}
-                />
-
-                <div className="mt-4">
-                    {activeInputTab === 'planets' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {planets.map(planet => (
-                                <PlanetInput
-                                    key={planet.id}
-                                    planet={planet}
-                                    onChange={handlePlanetPositionChange}
-                                />
-                            ))}
-                        </div>
-                    )}
-
-                    {activeInputTab === 'houses' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {houses.map(house => (
-                                <HouseInput
-                                    key={house.number}
-                                    house={house}
-                                    onChange={handleHousePositionChange}
-                                />
-                            ))}
-                        </div>
-                    )}
-
-                    {activeInputTab === 'adjust' && (
-                        <PlanetAdjuster
-                            planets={planets}
-                            houses={houses}
-                            onPlanetAdjusted={handlePlanetAdjustment}
-                        />
-                    )}
+                    <div className="flex space-x-2">
+                        <button
+                            className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            onClick={openPlanetInputSidebar}
+                        >
+                            Edit Planets
+                        </button>
+                        <button
+                            className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            onClick={openHouseInputSidebar}
+                        >
+                            Edit Houses
+                        </button>
+                        <button
+                            className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                            onClick={openAdjusterSidebar}
+                        >
+                            Adjust Planets
+                        </button>
+                        <button
+                            className="px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+                            onClick={handleCalculate}
+                        >
+                            {isCalculated ? 'Update Results' : 'Calculate Hits'}
+                        </button>
+                    </div>
                 </div>
+            </header>
 
-                <div className="mt-6 flex justify-end">
-                    <button
-                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                        onClick={handleCalculate}
-                    >
-                        {isCalculated ? 'Update Results' : 'Calculate Hits'}
-                    </button>
-                </div>
-            </div>
+            {/* Main content area with results */}
+            <div className="flex-1 overflow-auto p-4 bg-gray-50">
+                <div className="bg-white rounded-lg shadow p-6 h-full">
 
-            {/* Section 2: Results (Always Visible) */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold mb-4">Results</h2>
+                    {/* Relationship type tabs */}
+                    <div className="flex flex-col h-full">
+                        <div className="mb-4">
+                            <TabSelector
+                                tabs={relationshipTabs}
+                                activeTab={activeRelationshipTab}
+                                onTabChange={setActiveRelationshipTab}
+                            />
 
-                <TabSelector
-                    tabs={resultTabs}
-                    activeTab={activeResultTab}
-                    onTabChange={setActiveResultTab}
-                />
+                            {/* View mode toggle buttons */}
+                            <div className="flex space-x-2 mt-4">
+                                <button
+                                    className={`px-3 py-1 rounded ${resultViewMode === 'original' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                    onClick={() => setResultViewMode('original')}
+                                >
+                                    Original
+                                </button>
+                                <button
+                                    className={`px-3 py-1 rounded ${resultViewMode === 'corrected' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                    onClick={() => setResultViewMode('corrected')}
+                                    disabled={!isCalculated}
+                                >
+                                    Corrected
+                                </button>
+                                <button
+                                    className={`px-3 py-1 rounded ${resultViewMode === 'comparison' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                    onClick={() => setResultViewMode('comparison')}
+                                    disabled={!isCalculated}
+                                >
+                                    Comparison
+                                </button>
+                            </div>
+                        </div>
 
-                <div className="mt-4">
-                    {activeResultTab === 'original' && (
-                        <ResultsTable
-                            planets={originalPlanets.length > 0 ? originalPlanets : planets}
-                            houses={houses}
-                            mode="original"
-                        />
-                    )}
-
-                    {activeResultTab === 'corrected' && (
-                        <ResultsTable
-                            planets={planets}
-                            houses={houses}
-                            mode="corrected"
-                        />
-                    )}
-
-                    {activeResultTab === 'comparison' && (
-                        <div>
+                        {/* Comparison Legend (only shown for comparison view) */}
+                        {resultViewMode === 'comparison' && (
                             <div className="mb-4 flex space-x-4">
                                 <div className="flex items-center">
                                     <div className="w-4 h-4 bg-green-300 mr-2"></div>
@@ -198,14 +226,31 @@ const VastuCalculator = () => {
                                     <span>Worsened (Positive → Negative)</span>
                                 </div>
                             </div>
-                            <ResultsTable
-                                planets={planets}
-                                houses={houses}
-                                mode="comparison"
-                                originalPlanets={originalPlanets}
-                            />
+                        )}
+
+                        {/* Results tables - fills remaining height */}
+                        <div className="flex-1 overflow-auto">
+                            {activeRelationshipTab === 'planet-house' && (
+                                <ResultsTable
+                                    planets={resultViewMode === 'original' ? (originalPlanets.length > 0 ? originalPlanets : planets) : planets}
+                                    houses={houses}
+                                    mode={resultViewMode}
+                                    originalPlanets={originalPlanets}
+                                    relationshipType="planet-house"
+                                />
+                            )}
+
+                            {activeRelationshipTab === 'planet-planet' && (
+                                <ResultsTable
+                                    planets={resultViewMode === 'original' ? (originalPlanets.length > 0 ? originalPlanets : planets) : planets}
+                                    houses={houses}
+                                    mode={resultViewMode}
+                                    originalPlanets={originalPlanets}
+                                    relationshipType="planet-planet"
+                                />
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </div>

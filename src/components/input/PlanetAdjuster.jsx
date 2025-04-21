@@ -1,27 +1,37 @@
-// src/components/input/PlanetAdjuster.js
+// src/components/input/PlanetAdjuster.jsx
 import React from 'react';
 import AstroUtils from '../../utils/AstroUtils';
 
 const PlanetAdjuster = ({ planets, houses, onPlanetAdjusted }) => {
+    // Function to handle slider change
     const handleSliderChange = (planetId, value) => {
         const position = AstroUtils.formatPosition(value);
         onPlanetAdjusted(planetId, position);
     };
 
+    // Function to snap planet to nearest house cusp
+    const snapToHouse = (planetId, houseNumber) => {
+        const house = houses.find(h => h.number === houseNumber);
+        if (house) {
+            onPlanetAdjusted(planetId, house.position);
+        }
+    };
+
     return (
-        <div className="space-y-6">
-            <p className="text-sm text-gray-600 mb-4">
-                Drag the sliders to adjust planet positions. Houses are marked as reference points.
+        <div className="space-y-6 px-2">
+            <p className="text-sm text-gray-600 mb-6">
+                Drag sliders to adjust planet positions or click a house number to snap to that cusp.
             </p>
 
             {planets.filter(p => p.canHit).map(planet => (
                 <div key={planet.id} className="mb-8">
-                    <div className="flex items-center mb-1">
-                        <span className="font-medium">{planet.name}:{planet.position}</span>
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">{planet.name}: {planet.position}</span>
                     </div>
 
-                    <div className="relative h-16">
-                        {/* Degree markers */}
+                    {/* Simplified slider with direct HTML input range */}
+                    <div className="relative pt-5 pb-8">
+                        {/* Degree markers - just 0, 90, 180, 270, 360 */}
                         <div className="absolute top-0 left-0 right-0 flex justify-between text-xs text-gray-500">
                             <span>0°</span>
                             <span>90°</span>
@@ -30,31 +40,29 @@ const PlanetAdjuster = ({ planets, houses, onPlanetAdjusted }) => {
                             <span>360°</span>
                         </div>
 
-                        {/* Single continuous slider track */}
-                        <div className="absolute h-2 bg-gray-200 left-0 right-0 top-8 rounded-full"></div>
-
-                        {/* House number markers */}
-                        {houses.map(house => (
-                            <div
-                                key={`house-${house.number}`}
-                                className="absolute h-6 w-0.5 bg-gray-400 top-6"
-                                style={{ left: `${(AstroUtils.parsePosition(house.position) / 360) * 100}%` }}
-                            >
-                                <div className="absolute bottom-6 transform -translate-x-1/2 text-xs text-gray-600">
+                        {/* House numbers as clickable buttons */}
+                        <div className="absolute bottom-0 left-0 right-0 flex justify-between">
+                            {houses.map(house => (
+                                <button
+                                    key={`house-btn-${house.number}`}
+                                    className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs hover:bg-blue-200 focus:outline-none"
+                                    style={{
+                                        position: 'absolute',
+                                        left: `${(AstroUtils.parsePosition(house.position) / 360) * 100}%`,
+                                        transform: 'translateX(-50%)'
+                                    }}
+                                    onClick={() => snapToHouse(planet.id, house.number)}
+                                    title={`${house.number}: ${AstroUtils.formatDegree(house.position)}`}
+                                >
                                     {house.number}
-                                </div>
-                            </div>
-                        ))}
+                                </button>
+                            ))}
+                        </div>
 
-                        {/* ONLY the main planet slider dot - large and prominent */}
-                        <div
-                            className="absolute h-8 w-8 bg-blue-600 rounded-full shadow-md top-5 transform -translate-x-1/2 cursor-grab"
-                            style={{
-                                left: `${(AstroUtils.parsePosition(planet.position) / 360) * 100}%`,
-                            }}
-                        ></div>
+                        {/* Simple slider track */}
+                        <div className="h-2 bg-gray-200 rounded-full mt-1"></div>
 
-                        {/* The actual range input - invisible but captures events */}
+                        {/* Actual range input - made visible for better UX */}
                         <input
                             type="range"
                             min="0"
@@ -62,8 +70,21 @@ const PlanetAdjuster = ({ planets, houses, onPlanetAdjusted }) => {
                             step="0.01"
                             value={AstroUtils.parsePosition(planet.position)}
                             onChange={(e) => handleSliderChange(planet.id, parseFloat(e.target.value))}
-                            className="absolute w-full h-10 top-4 opacity-0 cursor-pointer"
-                            style={{ zIndex: 30 }}
+                            className="absolute top-6 left-0 w-full h-6 appearance-none bg-transparent"
+                            style={{
+                                // Custom styles for the thumb to make it more visible and grabbable
+                                WebkitAppearance: 'none',
+                                cursor: 'pointer'
+                            }}
+                        />
+
+                        {/* Custom thumb appearance */}
+                        <div
+                            className="absolute w-6 h-6 bg-blue-600 rounded-full shadow pointer-events-none"
+                            style={{
+                                top: '6px',
+                                left: `calc(${(AstroUtils.parsePosition(planet.position) / 360) * 100}% - 12px)`,
+                            }}
                         />
                     </div>
                 </div>

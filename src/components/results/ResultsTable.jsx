@@ -1,269 +1,145 @@
-// src/components/results/ResultsTable.js
+// src/components/results/ResultsTable.jsx
 import React from 'react';
 import AstroUtils from '../../utils/AstroUtils';
-import HitCell from './HitCell';
-import NoHitCell from './NoHitCell';
+import HitCell from './HitCell.jsx';
+import NoHitCell from './NoHitCell.jsx';
 
-const ResultsTable = ({ planets, houses, mode, originalPlanets }) => {
+const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshipType = 'planet-house' }) => {
+    // Filter out non-hitting planets
+    const hittingPlanets = planets.filter(planet => planet.canHit);
+
+    // Function to determine hit type between planet and house or planet
+    const determineHit = (sourcePlanet, targetPosition) => {
+        const angleDiff = AstroUtils.calculateAngleDifference(sourcePlanet.position, targetPosition);
+        return AstroUtils.determineHitType(angleDiff);
+    };
+
+    // Function to determine if hit status changed for comparison view
+    const determineHitChange = (sourcePlanet, targetPosition) => {
+        if (mode !== 'comparison' || originalPlanets.length === 0) return null;
+
+        const originalPlanet = originalPlanets.find(p => p.id === sourcePlanet.id);
+        if (!originalPlanet) return null;
+
+        const originalHit = AstroUtils.determineHitType(
+            AstroUtils.calculateAngleDifference(originalPlanet.position, targetPosition)
+        );
+
+        const currentHit = AstroUtils.determineHitType(
+            AstroUtils.calculateAngleDifference(sourcePlanet.position, targetPosition)
+        );
+
+        if (originalHit.type === 'negative' && currentHit.type === 'positive') {
+            return 'improved';
+        } else if (originalHit.type === 'positive' && currentHit.type === 'negative') {
+            return 'worsened';
+        } else if (originalHit.type === 'none' && currentHit.type !== 'none') {
+            return currentHit.type === 'positive' ? 'improved' : 'worsened';
+        } else if (originalHit.type !== 'none' && currentHit.type === 'none') {
+            return originalHit.type === 'negative' ? 'improved' : 'worsened';
+        }
+
+        return null;
+    };
+
+    // Render Planet → House table
+    if (relationshipType === 'planet-house') {
+        return (
+            <div className="overflow-x-auto">
+                <table className="min-w-full bg-white">
+                    <thead>
+                        <tr className="bg-gray-100">
+                            <th className="sticky left-0 bg-gray-100 px-4 py-2 border">Planet/Target</th>
+                            {houses.map(house => (
+                                <th key={`house-${house.number}`} className="px-4 py-2 border text-center whitespace-nowrap">
+                                    House {house.number}<br />
+                                    <span className="text-xs text-gray-500">{AstroUtils.formatDegree(house.position)}</span>
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {hittingPlanets.map(planet => (
+                            <tr key={`planet-${planet.id}`}>
+                                <td className="sticky left-0 bg-white px-4 py-2 border font-medium whitespace-nowrap">
+                                    {planet.name}<br />
+                                    <span className="text-xs text-gray-500">{AstroUtils.formatDegree(planet.position)}</span>
+                                </td>
+                                {houses.map(house => {
+                                    const hit = determineHit(planet, house.position);
+                                    const hitChange = determineHitChange(planet, house.position);
+
+                                    return hit.type !== 'none' ? (
+                                        <HitCell
+                                            key={`hit-${planet.id}-house-${house.number}`}
+                                            hit={hit}
+                                            isVipreet={AstroUtils.isVipreetHit(hit.type, house.number)}
+                                            changeStatus={hitChange}
+                                        />
+                                    ) : (
+                                        <NoHitCell
+                                            key={`nohit-${planet.id}-house-${house.number}`}
+                                            changeStatus={hitChange}
+                                        />
+                                    );
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        );
+    }
+
+    // Render Planet → Planet table
     return (
         <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300">
+            <table className="min-w-full bg-white">
                 <thead>
-                    <tr>
-                        <th className="border border-gray-300 p-2 bg-gray-100">Planet/Target</th>
-                        {houses.map(house => (
-                            <th key={`house-${house.number}`} className="border border-gray-300 p-2 bg-gray-100">
-                                House {house.number}
-                                <div className="text-xs font-normal mt-1">
-                                    {AstroUtils.formatDegree(house.position)}
-                                </div>
-                            </th>
-                        ))}
-                        {planets.map(planet => (
-                            <th key={`planet-${planet.id}`} className="border border-gray-300 p-2 bg-gray-100">
-                                {planet.name}
-                                <div className="text-xs font-normal mt-1">
-                                    {AstroUtils.formatDegree(planet.position)}
-                                </div>
+                    <tr className="bg-gray-100">
+                        <th className="sticky left-0 bg-gray-100 px-4 py-2 border">Planet/Target</th>
+                        {hittingPlanets.map(targetPlanet => (
+                            <th key={`target-${targetPlanet.id}`} className="px-4 py-2 border text-center whitespace-nowrap">
+                                {targetPlanet.name}<br />
+                                <span className="text-xs text-gray-500">{AstroUtils.formatDegree(targetPlanet.position)}</span>
                             </th>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
-                    {planets.map(planet => (
-                        <tr key={`row-${planet.id}`}>
-                            <td className="border border-gray-300 p-2 font-bold bg-gray-50">
-                                {planet.name}
-                                {!planet.canHit && <span className="text-xs text-gray-500">*</span>}
-                                <div className="text-xs font-normal mt-1">
-                                    {AstroUtils.formatDegree(planet.position)}
-                                </div>
+                    {hittingPlanets.map(sourcePlanet => (
+                        <tr key={`source-${sourcePlanet.id}`}>
+                            <td className="sticky left-0 bg-white px-4 py-2 border font-medium whitespace-nowrap">
+                                {sourcePlanet.name}<br />
+                                <span className="text-xs text-gray-500">{AstroUtils.formatDegree(sourcePlanet.position)}</span>
                             </td>
-
-                            {/* Planet to House hits */}
-                            {houses.map(house => {
-                                // Skip calculation if the planet can't hit
-                                if (!planet.canHit) {
+                            {hittingPlanets.map(targetPlanet => {
+                                // Skip self-relationships
+                                if (sourcePlanet.id === targetPlanet.id) {
                                     return (
                                         <td
-                                            key={`house-${house.number}`}
-                                            className="border border-gray-300 p-2 bg-gray-100 text-center relative"
-                                        >
-                                            <NoHitCell
-                                                reason="noHitPlanet"
-                                                sourceName={planet.name}
-                                                sourcePosition={planet.position}
-                                                targetName={`House ${house.number}`}
-                                                targetPosition={house.position}
-                                            />
-                                        </td>
-                                    );
-                                }
-
-                                // Check if planet is sitting in the house
-                                if (AstroUtils.isInHouse(planet.position, house.position)) {
-                                    return (
-                                        <td
-                                            key={`house-${house.number}`}
-                                            className="border border-gray-300 p-2 bg-gray-100 text-center relative"
-                                        >
-                                            <NoHitCell
-                                                reason="inHouse"
-                                                sourceName={planet.name}
-                                                sourcePosition={planet.position}
-                                                targetName={`House ${house.number}`}
-                                                targetPosition={house.position}
-                                            />
-                                        </td>
-                                    );
-                                }
-
-                                // Check if house is beyond 8th from planet (9th to 12th)
-                                if (AstroUtils.isBeyondEighthHouse(planet.position, house.position)) {
-                                    return (
-                                        <td
-                                            key={`house-${house.number}`}
-                                            className="border border-gray-300 p-2 bg-gray-100 text-center relative"
-                                        >
-                                            <NoHitCell
-                                                reason="beyond8th"
-                                                sourceName={planet.name}
-                                                sourcePosition={planet.position}
-                                                targetName={`House ${house.number}`}
-                                                targetPosition={house.position}
-                                            />
-                                        </td>
-                                    );
-                                }
-
-                                const angleDiff = AstroUtils.calculateAngleDifference(planet.position, house.position);
-                                const hitInfo = AstroUtils.determineHitType(angleDiff);
-                                const isVipreet = AstroUtils.isVipreetHit(hitInfo.type, house.number);
-
-                                // For comparison mode, add special styling
-                                if (mode === 'comparison' && originalPlanets) {
-                                    const originalPlanet = originalPlanets.find(p => p.id === planet.id);
-                                    if (originalPlanet) {
-                                        const originalAngleDiff = AstroUtils.calculateAngleDifference(originalPlanet.position, house.position);
-                                        const originalHitInfo = AstroUtils.determineHitType(originalAngleDiff);
-                                        const originalIsVipreet = AstroUtils.isVipreetHit(originalHitInfo.type, house.number);
-
-                                        // Highlight changes
-                                        if (hitInfo.type !== originalHitInfo.type || (isVipreet !== originalIsVipreet)) {
-                                            if ((hitInfo.type === "positive" || isVipreet) &&
-                                                (originalHitInfo.type === "negative" && !originalIsVipreet)) {
-                                                // Improved: negative to positive
-                                                return (
-                                                    <td key={`house-${house.number}`} className="border border-gray-300 p-2 text-center relative bg-green-300">
-                                                        <HitCell
-                                                            angleDiff={angleDiff}
-                                                            hitInfo={hitInfo}
-                                                            isVipreet={isVipreet}
-                                                            sourceType="planet"
-                                                            sourceName={planet.name}
-                                                            sourcePosition={planet.position}
-                                                            targetType="house"
-                                                            targetName={`House ${house.number}`}
-                                                            targetPosition={house.position}
-                                                        />
-                                                    </td>
-                                                );
-                                            } else if ((hitInfo.type === "negative" && !isVipreet) &&
-                                                (originalHitInfo.type === "positive" || originalIsVipreet)) {
-                                                // Worsened: positive to negative
-                                                return (
-                                                    <td key={`house-${house.number}`} className="border border-gray-300 p-2 text-center relative bg-red-300">
-                                                        <HitCell
-                                                            angleDiff={angleDiff}
-                                                            hitInfo={hitInfo}
-                                                            isVipreet={isVipreet}
-                                                            sourceType="planet"
-                                                            sourceName={planet.name}
-                                                            sourcePosition={planet.position}
-                                                            targetType="house"
-                                                            targetName={`House ${house.number}`}
-                                                            targetPosition={house.position}
-                                                        />
-                                                    </td>
-                                                );
-                                            }
-                                        }
-                                    }
-                                }
-
-                                return (
-                                    <HitCell
-                                        key={`house-${house.number}`}
-                                        angleDiff={angleDiff}
-                                        hitInfo={hitInfo}
-                                        isVipreet={isVipreet}
-                                        sourceType="planet"
-                                        sourceName={planet.name}
-                                        sourcePosition={planet.position}
-                                        targetType="house"
-                                        targetName={`House ${house.number}`}
-                                        targetPosition={house.position}
-                                    />
-                                );
-                            })}
-
-                            {/* Planet to Planet hits */}
-                            {planets.map(targetPlanet => {
-                                // Don't calculate for the same planet
-                                if (planet.id === targetPlanet.id) {
-                                    return (
-                                        <td
-                                            key={`planet-${targetPlanet.id}`}
-                                            className="border border-gray-300 p-2 bg-gray-200 text-center"
+                                            key={`self-${sourcePlanet.id}-${targetPlanet.id}`}
+                                            className="px-4 py-2 border text-center bg-gray-100"
                                         >
                                             -
                                         </td>
                                     );
                                 }
 
-                                // Skip calculation if the planet can't hit
-                                if (!planet.canHit) {
-                                    return (
-                                        <td
-                                            key={`planet-${targetPlanet.id}`}
-                                            className="border border-gray-300 p-2 bg-gray-100 text-center relative"
-                                        >
-                                            <NoHitCell
-                                                reason="noHitPlanet"
-                                                sourceName={planet.name}
-                                                sourcePosition={planet.position}
-                                                targetName={targetPlanet.name}
-                                                targetPosition={targetPlanet.position}
-                                            />
-                                        </td>
-                                    );
-                                }
+                                const hit = determineHit(sourcePlanet, targetPlanet.position);
+                                const hitChange = determineHitChange(sourcePlanet, targetPlanet.position);
 
-                                const angleDiff = AstroUtils.calculateAngleDifference(planet.position, targetPlanet.position);
-                                const hitInfo = AstroUtils.determineHitType(angleDiff);
-
-                                // For comparison mode, add special styling
-                                if (mode === 'comparison' && originalPlanets) {
-                                    const originalPlanet = originalPlanets.find(p => p.id === planet.id);
-                                    const originalTargetPlanet = originalPlanets.find(p => p.id === targetPlanet.id);
-
-                                    if (originalPlanet && originalTargetPlanet) {
-                                        const originalAngleDiff = AstroUtils.calculateAngleDifference(originalPlanet.position, originalTargetPlanet.position);
-                                        const originalHitInfo = AstroUtils.determineHitType(originalAngleDiff);
-
-                                        // Highlight changes
-                                        if (hitInfo.type !== originalHitInfo.type) {
-                                            if (hitInfo.type === "positive" && originalHitInfo.type !== "positive") {
-                                                // Improved: non-positive to positive
-                                                return (
-                                                    <td key={`planet-${targetPlanet.id}`} className="border border-gray-300 p-2 text-center relative bg-green-300">
-                                                        <HitCell
-                                                            angleDiff={angleDiff}
-                                                            hitInfo={hitInfo}
-                                                            isVipreet={false}
-                                                            sourceType="planet"
-                                                            sourceName={planet.name}
-                                                            sourcePosition={planet.position}
-                                                            targetType="planet"
-                                                            targetName={targetPlanet.name}
-                                                            targetPosition={targetPlanet.position}
-                                                        />
-                                                    </td>
-                                                );
-                                            } else if (hitInfo.type === "negative" && originalHitInfo.type === "positive") {
-                                                // Worsened: positive to negative
-                                                return (
-                                                    <td key={`planet-${targetPlanet.id}`} className="border border-gray-300 p-2 text-center relative bg-red-300">
-                                                        <HitCell
-                                                            angleDiff={angleDiff}
-                                                            hitInfo={hitInfo}
-                                                            isVipreet={false}
-                                                            sourceType="planet"
-                                                            sourceName={planet.name}
-                                                            sourcePosition={planet.position}
-                                                            targetType="planet"
-                                                            targetName={targetPlanet.name}
-                                                            targetPosition={targetPlanet.position}
-                                                        />
-                                                    </td>
-                                                );
-                                            }
-                                        }
-                                    }
-                                }
-
-                                return (
+                                return hit.type !== 'none' ? (
                                     <HitCell
-                                        key={`planet-${targetPlanet.id}`}
-                                        angleDiff={angleDiff}
-                                        hitInfo={hitInfo}
-                                        isVipreet={false} // No vipreet for planet-planet
-                                        sourceType="planet"
-                                        sourceName={planet.name}
-                                        sourcePosition={planet.position}
-                                        targetType="planet"
-                                        targetName={targetPlanet.name}
-                                        targetPosition={targetPlanet.position}
+                                        key={`hit-${sourcePlanet.id}-planet-${targetPlanet.id}`}
+                                        hit={hit}
+                                        isVipreet={false} // No vipreet concept for planet-to-planet
+                                        changeStatus={hitChange}
+                                    />
+                                ) : (
+                                    <NoHitCell
+                                        key={`nohit-${sourcePlanet.id}-planet-${targetPlanet.id}`}
+                                        changeStatus={hitChange}
                                     />
                                 );
                             })}
@@ -271,9 +147,6 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets }) => {
                     ))}
                 </tbody>
             </table>
-            <div className="mt-2 text-xs text-gray-500">
-                * Rahu and Ketu can be hit by other planets but do not hit other planets or houses
-            </div>
         </div>
     );
 };
