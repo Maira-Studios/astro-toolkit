@@ -44,6 +44,15 @@ const AstroUtils = {
         return `${degreesStr}-${minutesStr}`;
     },
 
+    // Check if two positions are effectively the same (within a very tight orb)
+    isInSamePosition: (position1, position2) => {
+        const pos1 = AstroUtils.parsePosition(position1);
+        const pos2 = AstroUtils.parsePosition(position2);
+
+        // Consider positions the same if within 1 degree
+        return Math.abs(pos1 - pos2) <= 1;
+    },
+
     // Check if a planet is sitting in a house (within a few degrees)
     isInHouse: (planetPosition, housePosition) => {
         const planetDeg = AstroUtils.parsePosition(planetPosition);
@@ -58,10 +67,15 @@ const AstroUtils = {
         const pos1 = AstroUtils.parsePosition(position1);
         const pos2 = AstroUtils.parsePosition(position2);
 
-        // Calculate the absolute difference without wrapping (no 360-diff)
+        // Calculate the absolute difference
         let diff = Math.abs(pos1 - pos2);
 
-        // Return the raw difference - will be used to check if > 180
+        // If diff > 180, take complement to get the smaller angle
+        if (diff > 180) {
+            diff = 360 - diff;
+        }
+
+        // Return the normalized difference (between 0 and 180)
         return diff;
     },
 

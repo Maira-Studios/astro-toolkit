@@ -1,0 +1,48 @@
+{
+  "appTitle": "अस्त्रो वास्तु हिट टेबल",
+  "actions": {
+    "editPlanets": "ग्रह संपादित करें",
+    "editHouses": "भाव संपादित करें",
+    "adjustHits": "हिट समायोजित करें",
+    "calculateHits": "हिट की गणना करें",
+    "updateResults": "परिणाम अपडेट करें"
+  },
+  "tabs": {
+    "planetToHouse": "ग्रह → भाव",
+    "planetToPlanet": "ग्रह → ग्रह"
+  },
+  "planets": {
+    "sun": "सूर्य",
+    "moon": "चंद्र",
+    "mars": "मंगल",
+    "mercury": "बुध",
+    "jupiter": "गुरु",
+    "venus": "शुक्र",
+    "saturn": "शनि",
+    "rahu": "राहु",
+    "ketu": "केतु"
+  },
+  "houses": {
+    "cusp": "कस्प"
+  },
+  "hits": {
+    "hit": "हिट",
+    "positive": "सकारात्मक",
+    "negative": "नकारात्मक",
+    "vipreet": "विपरीत",
+    "reason": "कारण",
+    "aspect": "दृष्टि",
+    "orb": "ओर्ब"
+  },
+  "tooltips": {
+    "calculation": "गणना",
+    "angleDifference": "कोण का अंतर",
+    "noHit": "कोई हिट नहीं",
+    "noHitBecause": "कोई हिट नहीं क्योंकि",
+    "noAspect": "कोई दृष्टि नहीं मिली",
+    "samePosition": "एक ही स्थिति में हैं",
+    "conjunction": "युति",
+    "positionedAt": "इस कस्प पर स्थित है",
+    "bothInSameCusp": "दोनों एक ही कस्प में हैं"
+  }
+}

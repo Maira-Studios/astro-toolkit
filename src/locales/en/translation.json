@@ -1,0 +1,48 @@
+{
+  "appTitle": "Astro Vastu Hit Table",
+  "actions": {
+    "editPlanets": "Edit Planets",
+    "editHouses": "Edit Houses",
+    "adjustHits": "Adjust Hits",
+    "calculateHits": "Calculate Hits",
+    "updateResults": "Update Results"
+  },
+  "tabs": {
+    "planetToHouse": "Planet → House",
+    "planetToPlanet": "Planet → Planet"
+  },
+  "planets": {
+    "sun": "Sun",
+    "moon": "Moon",
+    "mars": "Mars",
+    "mercury": "Mercury",
+    "jupiter": "Jupiter",
+    "venus": "Venus",
+    "saturn": "Saturn",
+    "rahu": "Rahu",
+    "ketu": "Ketu"
+  },
+  "houses": {
+    "cusp": "Cusp"
+  },
+  "hits": {
+    "hit": "Hit",
+    "positive": "Positive",
+    "negative": "Negative",
+    "vipreet": "Vipreet",
+    "reason": "Reason",
+    "aspect": "aspect",
+    "orb": "orb"
+  },
+  "tooltips": {
+    "calculation": "Calculation",
+    "angleDifference": "Angle difference",
+    "noHit": "No hit",
+    "noHitBecause": "No hit because",
+    "noAspect": "No aspect found",
+    "samePosition": "in the same position",
+    "conjunction": "conjunction",
+    "positionedAt": "is positioned at this cusp",
+    "bothInSameCusp": "are both in the same cusp"
+  }
+}

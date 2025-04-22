@@ -1,17 +1,19 @@
 // src/pages/VastuCalculator.js
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import ResultsTable from "../components/results/ResultsTable.jsx";
 import TabSelector from '../components/common/TabSelector.jsx';
 import PlanetInput from "../components/input/PlanetInput.jsx";
 import HouseInput from "../components/input/HouseInput.jsx";
-import PlanetAdjuster from "../components/input/PlanetAdjuster.jsx";
 import PlanetRecommender from '../components/input/PlanetRecommender.jsx';
+import LanguageSelector from '../components/common/LanguageSelector.jsx';
 
 const VastuCalculator = ({ openSidebar }) => {
+    const { t, i18n } = useTranslation();
+
     // State for planets and houses
     const [planets, setPlanets] = useState([
-        { id: 'asc', name: 'Ascendant', position: '115-51', canHit: true },
         { id: 'sun', name: 'Sun', position: '057-08', canHit: true },
         { id: 'moon', name: 'Moon', position: '070-40', canHit: true },
         { id: 'mars', name: 'Mars', position: '054-49', canHit: true },
@@ -38,38 +40,66 @@ const VastuCalculator = ({ openSidebar }) => {
         { number: 12, position: '086-40' }
     ]);
 
+    // Keep a reference to the current sidebar content to update it
+    const [currentSidebarContent, setCurrentSidebarContent] = useState(null);
+
+    // Update planet names when language changes
+    useEffect(() => {
+        setPlanets(prev => prev.map(planet => ({
+            ...planet,
+            name: t(`planets.${planet.id}`)
+        })));
+    }, [i18n.language, t]);
+
     // State for relationship type tabs in main view
     const [activeRelationshipTab, setActiveRelationshipTab] = useState('planet-house');
     const relationshipTabs = [
-        { id: 'planet-house', label: 'Planet → House' },
-        { id: 'planet-planet', label: 'Planet → Planet' }
+        { id: 'planet-house', label: t('tabs.planetToHouse') },
+        { id: 'planet-planet', label: t('tabs.planetToPlanet') }
     ];
 
-    // State for results view mode
-    const [resultViewMode, setResultViewMode] = useState('original');
-
-    // State for original planets (for comparison)
-    const [originalPlanets, setOriginalPlanets] = useState([]);
-
     // State for calculation status
-    const [isCalculated, setIsCalculated] = useState(false);
+    const [isCalculated, setIsCalculated] = useState(true); // Default to true to show results immediately
 
     // Handle planet position change
     const handlePlanetPositionChange = (id, position) => {
-        setPlanets(planets.map(planet =>
+        // Validate position format
+        if (position && !/^\d{3}-\d{2}$/.test(position)) {
+            return; // Don't update if format is invalid
+        }
+
+        // Update planets state
+        setPlanets(prev => prev.map(planet =>
             planet.id === id ? { ...planet, position } : planet
         ));
+
+        // Update the current sidebar content if it's the planet input sidebar
+        if (currentSidebarContent && currentSidebarContent.title === t('actions.editPlanets')) {
+            updatePlanetInputSidebar();
+        }
     };
 
     // Handle house position change
     const handleHousePositionChange = (number, position) => {
-        setHouses(houses.map(house =>
+        // Validate position format
+        if (position && !/^\d{3}-\d{2}$/.test(position)) {
+            return; // Don't update if format is invalid
+        }
+
+        // Update houses state
+        setHouses(prev => prev.map(house =>
             house.number === number ? { ...house, position } : house
         ));
+
+        // Update the current sidebar content if it's the house input sidebar
+        if (currentSidebarContent && currentSidebarContent.title === t('actions.editHouses')) {
+            updateHouseInputSidebar();
+        }
     };
 
     // Handle planet adjustment
     const handlePlanetAdjustment = (id, position) => {
+        // Update planets state
         setPlanets(prev =>
             prev.map(planet =>
                 planet.id === id ? { ...planet, position } : planet
@@ -77,20 +107,15 @@ const VastuCalculator = ({ openSidebar }) => {
         );
     };
 
-
     // Handle calculation
     const handleCalculate = () => {
-        if (!isCalculated) {
-            // Store the original planets for comparison
-            setOriginalPlanets(planets.map(planet => ({ ...planet, originalPosition: planet.position })));
-            setIsCalculated(true);
-        }
+        setIsCalculated(true);
     };
 
-    // Open planet input sidebar
-    const openPlanetInputSidebar = () => {
-        openSidebar({
-            title: 'Planet Inputs',
+    // Function to create and update the planet input sidebar
+    const updatePlanetInputSidebar = () => {
+        const content = {
+            title: t('actions.editPlanets'),
             content: (
                 <div className="grid grid-cols-1 gap-4">
                     {planets.map(planet => (
@@ -102,13 +127,16 @@ const VastuCalculator = ({ openSidebar }) => {
                     ))}
                 </div>
             )
-        });
+        };
+
+        setCurrentSidebarContent(content);
+        return content;
     };
 
-    // Open house input sidebar
-    const openHouseInputSidebar = () => {
-        openSidebar({
-            title: 'House Inputs',
+    // Function to create and update the house input sidebar
+    const updateHouseInputSidebar = () => {
+        const content = {
+            title: t('actions.editHouses'),
             content: (
                 <div className="grid grid-cols-1 gap-4">
                     {houses.map(house => (
@@ -120,67 +148,75 @@ const VastuCalculator = ({ openSidebar }) => {
                     ))}
                 </div>
             )
-        });
+        };
+
+        setCurrentSidebarContent(content);
+        return content;
+    };
+
+    // Open planet input sidebar
+    const openPlanetInputSidebar = () => {
+        const content = updatePlanetInputSidebar();
+        openSidebar(content);
+    };
+
+    // Open house input sidebar
+    const openHouseInputSidebar = () => {
+        const content = updateHouseInputSidebar();
+        openSidebar(content);
     };
 
     // Open planet adjuster sidebar
     const openAdjusterSidebar = () => {
-        openSidebar({
-            title: 'Adjust Hits',
+        const content = {
+            title: t('actions.adjustHits'),
             content: (
-                /*  <PlanetAdjuster
-                     planets={planets}
-                     houses={houses}
-                     onPlanetAdjusted={handlePlanetAdjustment}
-                 /> */
                 <PlanetRecommender
                     planets={planets}
                     houses={houses}
                     onRecommendationApplied={handlePlanetAdjustment}
                 />
-
             )
-        });
-    };
+        };
 
-    // Effect to update original planets when isCalculated changes
-    useEffect(() => {
-        if (isCalculated && originalPlanets.length === 0) {
-            setOriginalPlanets(planets.map(planet => ({ ...planet, originalPosition: planet.position })));
-        }
-    }, [isCalculated, planets, originalPlanets.length]);
+        setCurrentSidebarContent(content);
+        openSidebar(content);
+    };
 
     return (
         <div className="w-full h-full flex flex-col">
             {/* Header area with title and action buttons */}
             <header className="bg-white border-b p-4">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Astro Vastu Hit Table</h1>
+                    <div className="flex items-center space-x-4">
+                        <h1 className="text-2xl font-bold">{t('appTitle')}</h1>
+                        <LanguageSelector />
+                    </div>
 
                     <div className="flex space-x-2">
                         <button
                             className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                             onClick={openPlanetInputSidebar}
                         >
-                            Edit Planets
+                            {t('actions.editPlanets')}
                         </button>
                         <button
                             className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                             onClick={openHouseInputSidebar}
                         >
-                            Edit Houses
+                            {t('actions.editHouses')}
                         </button>
                         <button
                             className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600"
                             onClick={openAdjusterSidebar}
                         >
-                            Adjust Hits
+                            {t('actions.adjustHits')}
                         </button>
                         <button
                             className="px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
                             onClick={handleCalculate}
                         >
-                            {isCalculated ? 'Update Results' : 'Calculate Hits'}
+                            {isCalculated ? t('actions.updateResults') : t('actions.calculateHits')}
                         </button>
                     </div>
                 </div>
@@ -198,66 +234,28 @@ const VastuCalculator = ({ openSidebar }) => {
                                 activeTab={activeRelationshipTab}
                                 onTabChange={setActiveRelationshipTab}
                             />
-
-                            {/* View mode toggle buttons */}
-                            <div className="flex space-x-2 mt-4">
-                                <button
-                                    className={`px-3 py-1 rounded ${resultViewMode === 'original' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                                    onClick={() => setResultViewMode('original')}
-                                >
-                                    Original
-                                </button>
-                                <button
-                                    className={`px-3 py-1 rounded ${resultViewMode === 'corrected' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                                    onClick={() => setResultViewMode('corrected')}
-                                    disabled={!isCalculated}
-                                >
-                                    Corrected
-                                </button>
-                                <button
-                                    className={`px-3 py-1 rounded ${resultViewMode === 'comparison' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                                    onClick={() => setResultViewMode('comparison')}
-                                    disabled={!isCalculated}
-                                >
-                                    Comparison
-                                </button>
-                            </div>
                         </div>
-
-                        {/* Comparison Legend (only shown for comparison view) */}
-                        {resultViewMode === 'comparison' && (
-                            <div className="mb-4 flex space-x-4">
-                                <div className="flex items-center">
-                                    <div className="w-4 h-4 bg-green-300 mr-2"></div>
-                                    <span>Improved (Negative → Positive)</span>
-                                </div>
-                                <div className="flex items-center">
-                                    <div className="w-4 h-4 bg-red-300 mr-2"></div>
-                                    <span>Worsened (Positive → Negative)</span>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Results tables - fills remaining height */}
                         <div className="flex-1 overflow-auto">
-                            {activeRelationshipTab === 'planet-house' && (
-                                <ResultsTable
-                                    planets={resultViewMode === 'original' ? (originalPlanets.length > 0 ? originalPlanets : planets) : planets}
-                                    houses={houses}
-                                    mode={resultViewMode}
-                                    originalPlanets={originalPlanets}
-                                    relationshipType="planet-house"
-                                />
-                            )}
+                            {isCalculated && (
+                                <>
+                                    {activeRelationshipTab === 'planet-house' && (
+                                        <ResultsTable
+                                            planets={planets}
+                                            houses={houses}
+                                            relationshipType="planet-house"
+                                        />
+                                    )}
 
-                            {activeRelationshipTab === 'planet-planet' && (
-                                <ResultsTable
-                                    planets={resultViewMode === 'original' ? (originalPlanets.length > 0 ? originalPlanets : planets) : planets}
-                                    houses={houses}
-                                    mode={resultViewMode}
-                                    originalPlanets={originalPlanets}
-                                    relationshipType="planet-planet"
-                                />
+                                    {activeRelationshipTab === 'planet-planet' && (
+                                        <ResultsTable
+                                            planets={planets}
+                                            houses={houses}
+                                            relationshipType="planet-planet"
+                                        />
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>

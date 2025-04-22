@@ -1,7 +1,12 @@
 // src/components/results/HitCell.jsx
-import React from 'react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import AstroUtils from '../../utils/AstroUtils';
 
-const HitCell = ({ hit, isVipreet = false, changeStatus = null }) => {
+const HitCell = ({ hit, isVipreet = false, changeStatus = null, sourcePlanet, targetPosition, targetName }) => {
+    const [showTooltip, setShowTooltip] = useState(false);
+    const { t } = useTranslation();
+
     // Guard against undefined hit
     if (!hit) {
         return (
@@ -19,6 +24,8 @@ const HitCell = ({ hit, isVipreet = false, changeStatus = null }) => {
         bgColor = 'bg-green-100';
     } else if (hit.type === 'negative' && !isVipreet) {
         bgColor = 'bg-red-100';
+    } else if (hit.type === 'beyond180') {
+        bgColor = 'bg-gray-50'; // Gray for beyond 180 degrees
     }
 
     // Override background for comparison mode
@@ -28,16 +35,65 @@ const HitCell = ({ hit, isVipreet = false, changeStatus = null }) => {
         bgColor = 'bg-red-200';
     }
 
+    // Get standard orb for an aspect
+    const getStandardOrb = (aspectDegree) => {
+        // Find the aspect in the AstroUtils aspects
+        for (const aspectType in AstroUtils.aspects) {
+            const aspect = AstroUtils.aspects[aspectType].find(a => a.degree === aspectDegree);
+            if (aspect) {
+                return aspect.orb;
+            }
+        }
+        return 0;
+    };
+
+    // Determine tooltip content
+    const getTooltipContent = () => {
+        const angleDiff = AstroUtils.calculateAngleDifference(sourcePlanet.position, targetPosition);
+
+        // Format for beyond 180 degrees hits
+        if (hit.type === 'beyond180') {
+            return `${sourcePlanet.name} (${AstroUtils.formatDegree(sourcePlanet.position)}) - ${targetName} (${AstroUtils.formatDegree(targetPosition)}) = ${angleDiff.toFixed(2)}°\n${t('tooltips.noHitBecause')} ${t('tooltips.noAspect')} >180° ± ${t('hits.orb')} (${angleDiff.toFixed(2)}°)`;
+        }
+
+        // Format for regular hits
+        const diffText = `${sourcePlanet.name} (${AstroUtils.formatDegree(sourcePlanet.position)}) - ${targetName} (${AstroUtils.formatDegree(targetPosition)}) = ${angleDiff.toFixed(2)}°`;
+
+        let hitTypeText;
+        if (hit.type === 'positive') {
+            hitTypeText = t('hits.positive');
+        } else if (hit.type === 'negative') {
+            if (isVipreet) {
+                hitTypeText = t('hits.vipreet');
+            } else {
+                hitTypeText = t('hits.negative');
+            }
+        } else {
+            hitTypeText = t('tooltips.noHit');
+        }
+
+        // Get the standard orb for this aspect
+        const standardOrb = getStandardOrb(hit.aspect);
+        let reasonText = `${t('hits.reason')} = ${hit.aspect}° ${t('hits.aspect')} (± ${standardOrb}° ${t('hits.orb')})`;
+
+        let additionalInfo = '';
+        if (changeStatus) {
+            additionalInfo = "\n" + (changeStatus === 'improved'
+                ? "This aspect has improved from the original chart"
+                : "This aspect has worsened from the original chart");
+        }
+
+        return `${diffText}\n${t('hits.hit')} = ${hitTypeText}\n${reasonText}${additionalInfo}`;
+    };
+
     // Determine what to display based on hit type
     const displayValue = () => {
         if (hit.type === 'none' || hit.type === 'beyond180') {
             return <span className="text-gray-500">NA</span>;
         }
 
+        // Show only the aspect angle without the orb value
         let displayAngle = `${hit.aspect}°`;
-        if (hit.orb > 0) {
-            displayAngle += ` ±${hit.orb}°`;
-        }
 
         // Symbol based on hit type and vipreet
         let symbol = hit.type === 'positive' ? '(+)' : '(-)';
@@ -58,8 +114,32 @@ const HitCell = ({ hit, isVipreet = false, changeStatus = null }) => {
     };
 
     return (
-        <td className={`px-4 py-2 border text-center ${bgColor}`}>
+        <td
+            className={`px-4 py-2 border text-center ${bgColor} relative`}
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+        >
             {displayValue()}
+
+            {showTooltip && (
+                <div className="absolute z-10 w-64 p-2 bg-black text-white text-xs rounded shadow-lg whitespace-pre-line"
+                    style={{
+                        bottom: '100%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        marginBottom: '5px'
+                    }}
+                >
+                    {getTooltipContent()}
+                    <div className="absolute w-2 h-2 bg-black transform rotate-45"
+                        style={{
+                            bottom: '-4px',
+                            left: '50%',
+                            marginLeft: '-4px'
+                        }}
+                    ></div>
+                </div>
+            )}
         </td>
     );
 };

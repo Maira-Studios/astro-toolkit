@@ -1,10 +1,13 @@
 // src/components/results/ResultsTable.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import AstroUtils from '../../utils/AstroUtils';
 import HitCell from './HitCell.jsx';
 import NoHitCell from './NoHitCell.jsx';
 
 const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshipType = 'planet-house' }) => {
+    // State for showing tooltips on self-position cells
+    const [showTooltip, setShowTooltip] = useState(null);
+
     // Filter out non-hitting planets
     const hittingPlanets = planets.filter(planet => planet.canHit);
 
@@ -42,6 +45,25 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
         return null;
     };
 
+    // Function to find planets in the same cusp
+    const getPlanetsInSameCusp = (planet) => {
+        const planetPos = AstroUtils.parsePosition(planet.position);
+
+        // Find which cusp this planet is in
+        const planetCusp = houses.find(house => {
+            const housePos = AstroUtils.parsePosition(house.position);
+            return Math.abs(planetPos - housePos) <= 5; // Consider 5 degree orb for cusp placement
+        });
+
+        if (!planetCusp) return [];
+
+        // Find other planets in the same cusp
+        return planets.filter(p =>
+            p.id !== planet.id &&
+            Math.abs(AstroUtils.parsePosition(p.position) - AstroUtils.parsePosition(planetCusp.position)) <= 5
+        );
+    };
+
     // Render Planet → House table
     if (relationshipType === 'planet-house') {
         return (
@@ -66,6 +88,45 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                                     <span className="text-xs text-gray-500">{AstroUtils.formatDegree(planet.position)}</span>
                                 </td>
                                 {houses.map(house => {
+                                    // Skip hits for a planet on its own cusp
+                                    if (AstroUtils.isInSamePosition(planet.position, house.position)) {
+                                        // Check if there are other planets in this cusp
+                                        const otherPlanetsInCusp = getPlanetsInSameCusp(planet);
+
+                                        return (
+                                            <td
+                                                key={`self-${planet.id}-house-${house.number}`}
+                                                className="px-4 py-2 border text-center bg-gray-100 relative"
+                                                onMouseEnter={() => setShowTooltip(`self-${planet.id}-house-${house.number}`)}
+                                                onMouseLeave={() => setShowTooltip(null)}
+                                            >
+                                                -
+                                                {showTooltip === `self-${planet.id}-house-${house.number}` && (
+                                                    <div className="absolute z-10 w-64 p-2 bg-black text-white text-xs rounded shadow-lg whitespace-pre-line"
+                                                        style={{
+                                                            bottom: '100%',
+                                                            left: '50%',
+                                                            transform: 'translateX(-50%)',
+                                                            marginBottom: '5px'
+                                                        }}
+                                                    >
+                                                        {otherPlanetsInCusp.length > 0
+                                                            ? `No hit because ${planet.name} and ${otherPlanetsInCusp.map(p => p.name).join(', ')} are both in the same cusp ${house.number}`
+                                                            : `No hit because ${planet.name} is positioned in cusp ${house.number}`
+                                                        }
+                                                        <div className="absolute w-2 h-2 bg-black transform rotate-45"
+                                                            style={{
+                                                                bottom: '-4px',
+                                                                left: '50%',
+                                                                marginLeft: '-4px'
+                                                            }}
+                                                        ></div>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        );
+                                    }
+
                                     const hit = determineHit(planet, house.position);
                                     const hitChange = determineHitChange(planet, house.position);
 
@@ -75,11 +136,17 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                                             hit={hit}
                                             isVipreet={AstroUtils.isVipreetHit(hit.type, house.number)}
                                             changeStatus={hitChange}
+                                            sourcePlanet={planet}
+                                            targetPosition={house.position}
+                                            targetName={`Cusp ${house.number}`}
                                         />
                                     ) : (
                                         <NoHitCell
                                             key={`nohit-${planet.id}-house-${house.number}`}
                                             changeStatus={hitChange}
+                                            sourcePlanet={planet}
+                                            targetPosition={house.position}
+                                            targetName={`Cusp ${house.number}`}
                                         />
                                     );
                                 })}
@@ -98,7 +165,7 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                 <thead>
                     <tr className="bg-gray-100">
                         <th className="sticky left-0 bg-gray-100 px-4 py-2 border">Planet/Target</th>
-                        {hittingPlanets.map(targetPlanet => (
+                        {planets.filter(p => p.id !== 'asc').map(targetPlanet => (
                             <th key={`target-${targetPlanet.id}`} className="px-4 py-2 border text-center whitespace-nowrap">
                                 {targetPlanet.name}<br />
                                 <span className="text-xs text-gray-500">{AstroUtils.formatDegree(targetPlanet.position)}</span>
@@ -107,13 +174,13 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                     </tr>
                 </thead>
                 <tbody>
-                    {hittingPlanets.map(sourcePlanet => (
+                    {hittingPlanets.filter(p => p.id !== 'asc').map(sourcePlanet => (
                         <tr key={`source-${sourcePlanet.id}`}>
                             <td className="sticky left-0 bg-white px-4 py-2 border font-medium whitespace-nowrap">
                                 {sourcePlanet.name}<br />
                                 <span className="text-xs text-gray-500">{AstroUtils.formatDegree(sourcePlanet.position)}</span>
                             </td>
-                            {hittingPlanets.map(targetPlanet => {
+                            {planets.filter(p => p.id !== 'asc').map(targetPlanet => {
                                 // Skip self-relationships
                                 if (sourcePlanet.id === targetPlanet.id) {
                                     return (
@@ -122,6 +189,40 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                                             className="px-4 py-2 border text-center bg-gray-100"
                                         >
                                             -
+                                        </td>
+                                    );
+                                }
+
+                                // Skip planets in the same position with tooltip
+                                if (AstroUtils.isInSamePosition(sourcePlanet.position, targetPlanet.position)) {
+                                    // Check if they share the same cusp
+                                    return (
+                                        <td
+                                            key={`same-pos-${sourcePlanet.id}-${targetPlanet.id}`}
+                                            className="px-4 py-2 border text-center bg-gray-100 relative"
+                                            onMouseEnter={() => setShowTooltip(`same-pos-${sourcePlanet.id}-${targetPlanet.id}`)}
+                                            onMouseLeave={() => setShowTooltip(null)}
+                                        >
+                                            -
+                                            {showTooltip === `same-pos-${sourcePlanet.id}-${targetPlanet.id}` && (
+                                                <div className="absolute z-10 w-64 p-2 bg-black text-white text-xs rounded shadow-lg whitespace-pre-line"
+                                                    style={{
+                                                        bottom: '100%',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        marginBottom: '5px'
+                                                    }}
+                                                >
+                                                    {`No hit because ${sourcePlanet.name} and ${targetPlanet.name} are in the same position (conjunction)`}
+                                                    <div className="absolute w-2 h-2 bg-black transform rotate-45"
+                                                        style={{
+                                                            bottom: '-4px',
+                                                            left: '50%',
+                                                            marginLeft: '-4px'
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                            )}
                                         </td>
                                     );
                                 }
@@ -135,11 +236,17 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                                         hit={hit}
                                         isVipreet={false} // No vipreet concept for planet-to-planet
                                         changeStatus={hitChange}
+                                        sourcePlanet={sourcePlanet}
+                                        targetPosition={targetPlanet.position}
+                                        targetName={targetPlanet.name}
                                     />
                                 ) : (
                                     <NoHitCell
                                         key={`nohit-${sourcePlanet.id}-planet-${targetPlanet.id}`}
                                         changeStatus={hitChange}
+                                        sourcePlanet={sourcePlanet}
+                                        targetPosition={targetPlanet.position}
+                                        targetName={targetPlanet.name}
                                     />
                                 );
                             })}

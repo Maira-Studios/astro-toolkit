@@ -1,9 +1,9 @@
-// src/App.jsx (or your main application file)
+// src/App.jsx
 import React, { useState } from 'react';
-import { ChakraProvider } from '@chakra-ui/react';
 import VastuCalculator from './pages/VastuCalculator';
 import Sidebar from './components/layout/Sidebar.jsx';
 import MainNavigation from './components/layout/MainNavigation.jsx';
+import './i189.js'; // Import the i18n configuration
 
 // Your existing navigation items
 const navigationItems = [
@@ -61,7 +61,6 @@ const App = () => {
   };
 
   return (
-
     <div className="flex h-screen bg-gray-100">
       {/* Fixed left navigation */}
       <MainNavigation
@@ -88,7 +87,6 @@ const App = () => {
         </Sidebar>
       )}
     </div>
-
   );
 };
 
