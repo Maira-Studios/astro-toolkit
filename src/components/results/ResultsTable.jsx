@@ -52,7 +52,7 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                             <th className="sticky left-0 bg-gray-100 px-4 py-2 border">Planet/Target</th>
                             {houses.map(house => (
                                 <th key={`house-${house.number}`} className="px-4 py-2 border text-center whitespace-nowrap">
-                                    House {house.number}<br />
+                                    Cusp {house.number}<br />
                                     <span className="text-xs text-gray-500">{AstroUtils.formatDegree(house.position)}</span>
                                 </th>
                             ))}

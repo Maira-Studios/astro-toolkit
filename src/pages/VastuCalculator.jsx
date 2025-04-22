@@ -6,6 +6,7 @@ import TabSelector from '../components/common/TabSelector.jsx';
 import PlanetInput from "../components/input/PlanetInput.jsx";
 import HouseInput from "../components/input/HouseInput.jsx";
 import PlanetAdjuster from "../components/input/PlanetAdjuster.jsx";
+import PlanetRecommender from '../components/input/PlanetRecommender.jsx';
 
 const VastuCalculator = ({ openSidebar }) => {
     // State for planets and houses
@@ -69,10 +70,13 @@ const VastuCalculator = ({ openSidebar }) => {
 
     // Handle planet adjustment
     const handlePlanetAdjustment = (id, position) => {
-        setPlanets(planets.map(planet =>
-            planet.id === id ? { ...planet, position } : planet
-        ));
+        setPlanets(prev =>
+            prev.map(planet =>
+                planet.id === id ? { ...planet, position } : planet
+            )
+        );
     };
+
 
     // Handle calculation
     const handleCalculate = () => {
@@ -122,13 +126,19 @@ const VastuCalculator = ({ openSidebar }) => {
     // Open planet adjuster sidebar
     const openAdjusterSidebar = () => {
         openSidebar({
-            title: 'Adjust Planets',
+            title: 'Adjust Hits',
             content: (
-                <PlanetAdjuster
+                /*  <PlanetAdjuster
+                     planets={planets}
+                     houses={houses}
+                     onPlanetAdjusted={handlePlanetAdjustment}
+                 /> */
+                <PlanetRecommender
                     planets={planets}
                     houses={houses}
-                    onPlanetAdjusted={handlePlanetAdjustment}
+                    onRecommendationApplied={handlePlanetAdjustment}
                 />
+
             )
         });
     };
@@ -164,7 +174,7 @@ const VastuCalculator = ({ openSidebar }) => {
                             className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600"
                             onClick={openAdjusterSidebar}
                         >
-                            Adjust Planets
+                            Adjust Hits
                         </button>
                         <button
                             className="px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"

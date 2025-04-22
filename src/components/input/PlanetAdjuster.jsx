@@ -16,7 +16,8 @@ const PlanetAdjuster = ({ planets, houses, onPlanetAdjusted }) => {
             </p>
 
             {planets.filter(p => p.canHit).map(planet => {
-                const currentPosition = AstroUtils.parsePosition(planet.position);
+                const currentPosition = AstroUtils.parsePosition(planets.find(p => p.id === planet.id).position);
+
 
                 return (
                     <div key={planet.id} className="mb-6">
@@ -51,7 +52,7 @@ const PlanetAdjuster = ({ planets, houses, onPlanetAdjusted }) => {
                                         className="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded text-gray-700"
                                         onClick={() => handleSliderChange(planet.id, AstroUtils.parsePosition(house.position))}
                                     >
-                                        House {house.number}
+                                        Cusp {house.number}
                                     </button>
                                 ))}
                             </div>
