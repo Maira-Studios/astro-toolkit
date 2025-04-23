@@ -23,6 +23,14 @@ const VedicChartPanel = ({ vedicChart }) => {
         );
     }
 
+    const { planetaryPositions, ascendant } = vedicChart;
+
+    // Get ascendant details
+    const ascDeg = ascendant.degree;
+    const ascSignIndex = ascendant.sign;
+    const ascSignDegree = ascendant.signDegree?.toFixed(2) || (ascDeg % 30).toFixed(2);
+    const ascSignName = SIGN_NAMES[ascSignIndex];
+
     return (
         <div className="space-y-6">
             <div>
@@ -30,23 +38,33 @@ const VedicChartPanel = ({ vedicChart }) => {
                 <table className="w-full text-sm border">
                     <thead>
                         <tr>
-                            <th className="border px-2">{t('Planet')}</th>
+                            <th className="border px-2">{t('Body')}</th>
                             <th className="border px-2">{t('Degree')}</th>
                             <th className="border px-2">{t('Sign')}</th>
                             <th className="border px-2">{t('House')}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {vedicChart.planetaryPositions.map(p => {
+                        {/* Ascendant row */}
+                        <tr>
+                            <td className="border px-2">Asc</td>
+                            <td className="border px-2">{ascSignDegree}°</td>
+                            <td className="border px-2">{t(`${ascSignIndex + 1} - ${ascSignName}`)}</td>
+                            <td className="border px-2">1</td>
+                        </tr>
+
+                        {/* Planet rows */}
+                        {planetaryPositions.map(p => {
                             const deg = Number(p.degree);
                             const signIndex = Math.floor(deg / 30) % 12;
                             const signDegree = (deg % 30).toFixed(2);
                             const signName = SIGN_NAMES[signIndex];
+
                             return (
                                 <tr key={p.planet}>
                                     <td className="border px-2">{p.planet}</td>
                                     <td className="border px-2">{signDegree}°</td>
-                                    <td className="border px-2">{signIndex + 1} - {t(signName)}</td>
+                                    <td className="border px-2">{t(`${signIndex + 1} - ${signName}`)}</td>
                                     <td className="border px-2">{p.house ?? '-'}</td>
                                 </tr>
                             );

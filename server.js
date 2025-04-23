@@ -21,12 +21,25 @@ app.use(bodyParser.json());
 app.post('/chart', async (req, res) => {
     const bd = req.body;
     try {
-        console.log(bd);
+        console.log("Received birth data:", bd);
+
+        // Add timezone for New Delhi if none provided
+        if (!bd.timezone) {
+            if (bd.latitude >= 8 && bd.latitude <= 37 && bd.longitude >= 68 && bd.longitude <= 97) {
+                bd.timezone = "Asia/Kolkata";
+            }
+        }
+
+        // Calculate Vedic chart
         const vedic = await getVedicChart(bd);
+
+        // Calculate KP data
         const kp = getKPCalculations(bd);
+
+        // Send response
         res.json({ vedic, kp });
     } catch (err) {
-        console.error(err);
+        console.error("Error processing chart data:", err);
         res.status(500).json({ error: err.message });
     }
 });
