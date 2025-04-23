@@ -1,4 +1,4 @@
-// src/utils/AstroUtils.js
+
 
 // Astrological calculation utilities
 const AstroUtils = {
@@ -31,78 +31,55 @@ const AstroUtils = {
 
     // Format decimal degrees to "DDD-MM" format
     formatPosition: (decimalDegrees) => {
-        // Ensure the value is between 0 and 360
         const normalizedDegrees = ((decimalDegrees % 360) + 360) % 360;
-
         const degrees = Math.floor(normalizedDegrees);
         const minutes = Math.round((normalizedDegrees - degrees) * 60);
 
-        // Format with leading zeros
         const degreesStr = degrees.toString().padStart(3, '0');
         const minutesStr = minutes.toString().padStart(2, '0');
 
         return `${degreesStr}-${minutesStr}`;
     },
 
-    // Check if two positions are effectively the same (within a very tight orb)
+    // Check if two positions are effectively the same (within 1°)
     isInSamePosition: (position1, position2) => {
         const pos1 = AstroUtils.parsePosition(position1);
         const pos2 = AstroUtils.parsePosition(position2);
-
-        // Consider positions the same if within 1 degree
         return Math.abs(pos1 - pos2) <= 1;
     },
 
-    // Check if a planet is sitting in a house (within a few degrees)
+    // Check if a planet is sitting in a house (within 5°)
     isInHouse: (planetPosition, housePosition) => {
         const planetDeg = AstroUtils.parsePosition(planetPosition);
         const houseDeg = AstroUtils.parsePosition(housePosition);
-
-        // Consider planet in house if it's within 5 degrees
         return Math.abs(planetDeg - houseDeg) <= 5;
     },
 
     // Calculate the angle difference between two positions
     calculateAngleDifference: (position1, position2) => {
-        const pos1 = AstroUtils.parsePosition(position1);
-        const pos2 = AstroUtils.parsePosition(position2);
-
-        // Calculate the absolute difference
-        let diff = Math.abs(pos1 - pos2);
-
-        // If diff > 180, take complement to get the smaller angle
-        if (diff > 180) {
-            diff = 360 - diff;
-        }
-
-        // Return the normalized difference (between 0 and 180)
+        let diff = Math.abs(
+            AstroUtils.parsePosition(position1) -
+            AstroUtils.parsePosition(position2)
+        );
+        if (diff > 180) diff = 360 - diff;
         return diff;
     },
 
-    // Check if the houses are 9th, 10th, 11th or 12th from the planet
+    // Check if the houses are beyond the 8th from the planet
     isBeyondEighthHouse: (planetPosition, housePosition) => {
-        const planetDeg = AstroUtils.parsePosition(planetPosition);
-        const houseDeg = AstroUtils.parsePosition(housePosition);
-
-        // Calculate the angle difference
-        let diff = Math.abs(houseDeg - planetDeg);
-
-        // If diff > 180, take complement to get the smaller angle
+        let diff = Math.abs(
+            AstroUtils.parsePosition(housePosition) -
+            AstroUtils.parsePosition(planetPosition)
+        );
         if (diff > 180) diff = 360 - diff;
-
-        // If diff is > 120 (i.e., more than 4 houses away), it's beyond 8th house
-        // This is an approximation since houses aren't exactly 30 degrees each
         return diff > 120;
     },
 
-    // Determine the type of hit
+    // Determine the type of hit (positive/negative/none/beyond180)
     determineHitType: (angleDiff) => {
-        // No hit if difference is greater than 180
         if (angleDiff > 180) {
             return { type: "beyond180", aspect: 0, orb: 0 };
         }
-
-        // Check for positive aspects
         for (const aspect of AstroUtils.aspects.positive) {
             if (Math.abs(angleDiff - aspect.degree) <= aspect.orb) {
                 return {
@@ -112,8 +89,6 @@ const AstroUtils = {
                 };
             }
         }
-
-        // Check for negative aspects
         for (const aspect of AstroUtils.aspects.negative) {
             if (Math.abs(angleDiff - aspect.degree) <= aspect.orb) {
                 return {
@@ -123,23 +98,21 @@ const AstroUtils = {
                 };
             }
         }
-
-        // No hit found
         return { type: "none", aspect: 0, orb: 0 };
     },
 
-    // Check if a hit is vipreet
+    // Check if a hit is vipreet (vakrirya) on 6th, 8th or 12th
     isVipreetHit: (hitType, houseNumber) => {
         return hitType === "negative" && [6, 8, 12].includes(houseNumber);
     },
 
-    // Format degree for display
+
+
+    // Format degree for display (for tooltips, etc.)
     formatDegree: (position) => {
         if (!position || typeof position !== 'string') return "";
-
         const parts = position.split('-');
         if (parts.length !== 2) return position;
-
         return `${parseInt(parts[0], 10)}°${parts[1]}'`;
     }
 };

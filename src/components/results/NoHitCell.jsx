@@ -1,6 +1,6 @@
 // src/components/results/NoHitCell.jsx
 import React, { useState } from 'react';
-import AstroUtils from '../../utils/AstroUtils';
+import AstroUtils from '../../utils/AstroUtils.js';
 
 const NoHitCell = ({ changeStatus, sourcePlanet, targetPosition, targetName }) => {
     const [showTooltip, setShowTooltip] = useState(false);

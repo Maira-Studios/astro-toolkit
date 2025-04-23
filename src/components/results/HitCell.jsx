@@ -1,7 +1,7 @@
 // src/components/results/HitCell.jsx
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import AstroUtils from '../../utils/AstroUtils';
+import AstroUtils from '../../utils/AstroUtils.js';
 
 const HitCell = ({ hit, isVipreet = false, changeStatus = null, sourcePlanet, targetPosition, targetName }) => {
     const [showTooltip, setShowTooltip] = useState(false);

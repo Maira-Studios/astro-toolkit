@@ -1,6 +1,6 @@
 // src/components/results/ResultsTable.jsx
 import React, { useState } from 'react';
-import AstroUtils from '../../utils/AstroUtils';
+import AstroUtils from '../../utils/AstroUtils.js';
 import HitCell from './HitCell.jsx';
 import NoHitCell from './NoHitCell.jsx';
 

@@ -1,6 +1,6 @@
 // src/components/input/PlanetRecommender.jsx
 import React, { useState } from 'react';
-import AstroUtils from '../../utils/AstroUtils';
+import AstroUtils from '../../utils/AstroUtils.js';
 
 const PlanetRecommender = ({ planets, houses, onRecommendationApplied }) => {
     const [selectedPlanetId, setSelectedPlanetId] = useState('');

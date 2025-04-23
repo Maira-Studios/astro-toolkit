@@ -8,6 +8,8 @@ import PlanetInput from "../components/input/PlanetInput.jsx";
 import HouseInput from "../components/input/HouseInput.jsx";
 import PlanetRecommender from '../components/input/PlanetRecommender.jsx';
 import LanguageSelector from '../components/common/LanguageSelector.jsx';
+import ChartSidebar from '../components/layout/ChartSidebar.jsx';
+
 
 const VastuCalculator = ({ openSidebar }) => {
     const { t, i18n } = useTranslation();
@@ -183,6 +185,21 @@ const VastuCalculator = ({ openSidebar }) => {
         openSidebar(content);
     };
 
+
+    const updateChartSidebar = () => {
+        return {
+            title: 'Birth Charta Data',
+            content: <ChartSidebar onClose={() => openSidebar(null)} />
+        };
+    };
+
+    const openChartSidebar = () => {
+        const panel = updateChartSidebar();
+        setCurrentSidebarContent(panel);
+        openSidebar(panel);
+    };
+
+
     return (
         <div className="w-full h-full flex flex-col">
             {/* Header area with title and action buttons */}
@@ -194,6 +211,12 @@ const VastuCalculator = ({ openSidebar }) => {
                     </div>
 
                     <div className="flex space-x-2">
+                        <button
+                            className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            onClick={openChartSidebar}
+                        >
+                            {t('New Chart')}
+                        </button>
                         <button
                             className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                             onClick={openPlanetInputSidebar}
