@@ -38,25 +38,7 @@ const VedicChartPanel = ({ vedicChart }) => {
                 </table>
             </div>
 
-            <div>
-                <h3 className="font-medium mb-2">{t('House Cusps')}</h3>
-                <table className="w-full text-sm border">
-                    <thead>
-                        <tr>
-                            <th className="border px-2">{t('Cusp')}</th>
-                            <th className="border px-2">{t('Degree')}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {vedicChart.houseCusps.map(c => (
-                            <tr key={c.cusp}>
-                                <td className="border px-2">{c.cusp}</td>
-                                <td className="border px-2">{c.degree.toFixed(2)}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+
         </div>
     );
 };

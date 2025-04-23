@@ -21,8 +21,9 @@ app.use(bodyParser.json());
 app.post('/chart', async (req, res) => {
     const bd = req.body;
     try {
+        console.log(bd);
         const vedic = await getVedicChart(bd);
-        const kp = getKPCalculations(vedic);
+        const kp = getKPCalculations(bd);
         res.json({ vedic, kp });
     } catch (err) {
         console.error(err);
