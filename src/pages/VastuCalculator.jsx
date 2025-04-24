@@ -1,7 +1,6 @@
-// src/pages/VastuCalculator.js
+// src/pages/VastuCalculator.jsx
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-
 import ResultsTable from "../components/results/ResultsTable.jsx";
 import TabSelector from '../components/common/TabSelector.jsx';
 import PlanetInput from "../components/input/PlanetInput.jsx";
@@ -10,8 +9,7 @@ import PlanetRecommender from '../components/input/PlanetRecommender.jsx';
 import LanguageSelector from '../components/common/LanguageSelector.jsx';
 import ChartSidebar from '../components/layout/ChartSidebar.jsx';
 
-
-const VastuCalculator = ({ openSidebar }) => {
+const VastuCalculator = ({ openSidebar, hideButtons = false }) => {
     const { t, i18n } = useTranslation();
 
     // State for planets and houses
@@ -55,6 +53,7 @@ const VastuCalculator = ({ openSidebar }) => {
 
     // State for relationship type tabs in main view
     const [activeRelationshipTab, setActiveRelationshipTab] = useState('planet-house');
+
     const relationshipTabs = [
         { id: 'planet-house', label: t('tabs.planetToHouse') },
         { id: 'planet-planet', label: t('tabs.planetToPlanet') }
@@ -99,156 +98,175 @@ const VastuCalculator = ({ openSidebar }) => {
         }
     };
 
-    // Handle planet adjustment
-    const handlePlanetAdjustment = (id, position) => {
-        // Update planets state
-        setPlanets(prev =>
-            prev.map(planet =>
-                planet.id === id ? { ...planet, position } : planet
-            )
+    // Open sidebar with planet input form
+    const openPlanetInputSidebar = () => {
+        const content = (
+            <div className="space-y-4">
+                {planets.map(planet => (
+                    <PlanetInput
+                        key={planet.id}
+                        planet={planet}
+                        onChange={handlePlanetPositionChange}
+                    />
+                ))}
+            </div>
         );
+
+        setCurrentSidebarContent({
+            title: t('actions.editPlanets'),
+            content
+        });
+
+        openSidebar({
+            title: t('actions.editPlanets'),
+            content
+        });
     };
 
-    // Handle calculation
+    // Update planet input sidebar content
+    const updatePlanetInputSidebar = () => {
+        const content = (
+            <div className="space-y-4">
+                {planets.map(planet => (
+                    <PlanetInput
+                        key={planet.id}
+                        planet={planet}
+                        onChange={handlePlanetPositionChange}
+                    />
+                ))}
+            </div>
+        );
+
+        setCurrentSidebarContent({
+            title: t('actions.editPlanets'),
+            content
+        });
+
+        openSidebar({
+            title: t('actions.editPlanets'),
+            content
+        });
+    };
+
+    // Open sidebar with house input form
+    const openHouseInputSidebar = () => {
+        const content = (
+            <div className="space-y-4">
+                {houses.map(house => (
+                    <HouseInput
+                        key={house.number}
+                        house={house}
+                        onChange={handleHousePositionChange}
+                    />
+                ))}
+            </div>
+        );
+
+        setCurrentSidebarContent({
+            title: t('actions.editHouses'),
+            content
+        });
+
+        openSidebar({
+            title: t('actions.editHouses'),
+            content
+        });
+    };
+
+    // Update house input sidebar content
+    const updateHouseInputSidebar = () => {
+        const content = (
+            <div className="space-y-4">
+                {houses.map(house => (
+                    <HouseInput
+                        key={house.number}
+                        house={house}
+                        onChange={handleHousePositionChange}
+                    />
+                ))}
+            </div>
+        );
+
+        setCurrentSidebarContent({
+            title: t('actions.editHouses'),
+            content
+        });
+
+        openSidebar({
+            title: t('actions.editHouses'),
+            content
+        });
+    };
+
+    // Open sidebar with planet hit adjuster
+    const openAdjusterSidebar = () => {
+        const content = (
+            <PlanetRecommender planets={planets} houses={houses} />
+        );
+
+        setCurrentSidebarContent({
+            title: t('actions.adjustHits'),
+            content
+        });
+
+        openSidebar({
+            title: t('actions.adjustHits'),
+            content
+        });
+    };
+
+    // Handle calculate/recalculate button click
     const handleCalculate = () => {
+        // For now, just toggle the calculation state
+        // In a real app, you would perform the calculation here
         setIsCalculated(true);
     };
 
-    // Function to create and update the planet input sidebar
-    const updatePlanetInputSidebar = () => {
-        const content = {
-            title: t('actions.editPlanets'),
-            content: (
-                <div className="grid grid-cols-1 gap-4">
-                    {planets.map(planet => (
-                        <PlanetInput
-                            key={planet.id}
-                            planet={planet}
-                            onChange={handlePlanetPositionChange}
-                        />
-                    ))}
-                </div>
-            )
-        };
-
-        setCurrentSidebarContent(content);
-        return content;
-    };
-
-    // Function to create and update the house input sidebar
-    const updateHouseInputSidebar = () => {
-        const content = {
-            title: t('actions.editHouses'),
-            content: (
-                <div className="grid grid-cols-1 gap-4">
-                    {houses.map(house => (
-                        <HouseInput
-                            key={house.number}
-                            house={house}
-                            onChange={handleHousePositionChange}
-                        />
-                    ))}
-                </div>
-            )
-        };
-
-        setCurrentSidebarContent(content);
-        return content;
-    };
-
-    // Open planet input sidebar
-    const openPlanetInputSidebar = () => {
-        const content = updatePlanetInputSidebar();
-        openSidebar(content);
-    };
-
-    // Open house input sidebar
-    const openHouseInputSidebar = () => {
-        const content = updateHouseInputSidebar();
-        openSidebar(content);
-    };
-
-    // Open planet adjuster sidebar
-    const openAdjusterSidebar = () => {
-        const content = {
-            title: t('actions.adjustHits'),
-            content: (
-                <PlanetRecommender
-                    planets={planets}
-                    houses={houses}
-                    onRecommendationApplied={handlePlanetAdjustment}
-                />
-            )
-        };
-
-        setCurrentSidebarContent(content);
-        openSidebar(content);
-    };
-
-
-    const updateChartSidebar = () => {
-        return {
-            title: 'Birth Charta Data',
-            content: <ChartSidebar onClose={() => openSidebar(null)} />
-        };
-    };
-
-    const openChartSidebar = () => {
-        const panel = updateChartSidebar();
-        setCurrentSidebarContent(panel);
-        openSidebar(panel);
-    };
-
-
     return (
-        <div className="w-full h-full flex flex-col">
-            {/* Header area with title and action buttons */}
-            <header className="bg-white border-b p-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                        <h1 className="text-2xl font-bold">{t('appTitle')}</h1>
-                        <LanguageSelector />
+        <div className="flex flex-col h-full">
+            {/* Top header with actions - hide if hideButtons is true */}
+            {!hideButtons && (
+                <header className="bg-white border-b">
+                    <div className="container mx-auto px-4 py-4">
+                        <div className="flex flex-wrap gap-2 items-center">
+                            <LanguageSelector />
+                            <button
+                                className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            >
+                                {t('New Chart')}
+                            </button>
+                            <button
+                                className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                onClick={openPlanetInputSidebar}
+                            >
+                                {t('actions.editPlanets')}
+                            </button>
+                            <button
+                                className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                onClick={openHouseInputSidebar}
+                            >
+                                {t('actions.editHouses')}
+                            </button>
+                            <button
+                                className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                onClick={openAdjusterSidebar}
+                            >
+                                {t('actions.adjustHits')}
+                            </button>
+                            <button
+                                className="px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+                                onClick={handleCalculate}
+                            >
+                                {isCalculated ? t('actions.updateResults') : t('actions.calculateHits')}
+                            </button>
+                        </div>
                     </div>
-
-                    <div className="flex space-x-2">
-                        <button
-                            className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                            onClick={openChartSidebar}
-                        >
-                            {t('New Chart')}
-                        </button>
-                        <button
-                            className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                            onClick={openPlanetInputSidebar}
-                        >
-                            {t('actions.editPlanets')}
-                        </button>
-                        <button
-                            className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                            onClick={openHouseInputSidebar}
-                        >
-                            {t('actions.editHouses')}
-                        </button>
-                        <button
-                            className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                            onClick={openAdjusterSidebar}
-                        >
-                            {t('actions.adjustHits')}
-                        </button>
-                        <button
-                            className="px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
-                            onClick={handleCalculate}
-                        >
-                            {isCalculated ? t('actions.updateResults') : t('actions.calculateHits')}
-                        </button>
-                    </div>
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* Main content area with results */}
             <div className="flex-1 overflow-auto p-4 bg-gray-50">
                 <div className="bg-white rounded-lg shadow p-6 h-full">
-
                     {/* Relationship type tabs */}
                     <div className="flex flex-col h-full">
                         <div className="mb-4">
@@ -270,7 +288,6 @@ const VastuCalculator = ({ openSidebar }) => {
                                             relationshipType="planet-house"
                                         />
                                     )}
-
                                     {activeRelationshipTab === 'planet-planet' && (
                                         <ResultsTable
                                             planets={planets}
