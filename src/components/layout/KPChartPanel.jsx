@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import PlaceholderComponent from '../common/PlaceholderComponent.jsx';
@@ -6,11 +5,10 @@ import PlaceholderComponent from '../common/PlaceholderComponent.jsx';
 const KPChartPanel = ({ kpData }) => {
     const { t } = useTranslation();
 
-    const kpNakshatraLords = [
-        "Ke", "Ve", "Su", "Mo", "Ma", "Ra", "Ju", "Sa", "Me",
-        "Ke", "Ve", "Su", "Mo", "Ma", "Ra", "Ju", "Sa", "Me",
-        "Ke", "Ve", "Su", "Mo", "Ma", "Ra", "Ju", "Sa", "Me"
-    ];
+    // Helper function to format degrees to two decimal places
+    const formatDegree = (deg) => {
+        return Number(deg).toFixed(2);
+    };
 
     if (!kpData) {
         return (
@@ -37,17 +35,12 @@ const KPChartPanel = ({ kpData }) => {
                     {kpData.kpPositions.map(kp => (
                         <tr key={kp.planet}>
                             <td className="border px-2">{kp.planet}</td>
-                            <td className="border px-2">{Number(kp.compoundDegree).toFixed(2)}</td>
-
-                            <td className="border px-2">{kpNakshatraLords[kp.starLord] || kp.starLord}</td>
-                            <td className="border px-2">{kpNakshatraLords[kp.subLord] || kp.subLord}</td>
+                            <td className="border px-2">{formatDegree(kp.compoundDegree)}</td>
+                            <td className="border px-2">{kp.starLord}</td>
+                            <td className="border px-2">{kp.subLord}</td>
                         </tr>
                     ))}
                 </tbody>
-
-
-
-
             </table>
             <div className="mt-6">
                 <h3 className="font-medium mb-2">{t('House Cusps')}</h3>
@@ -62,7 +55,7 @@ const KPChartPanel = ({ kpData }) => {
                         {kpData.houseCusps.map(c => (
                             <tr key={c.cusp}>
                                 <td className="border px-2">{c.cusp}</td>
-                                <td className="border px-2">{c.degree.toFixed(2)}</td>
+                                <td className="border px-2">{formatDegree(c.degree)}</td>
                             </tr>
                         ))}
                     </tbody>

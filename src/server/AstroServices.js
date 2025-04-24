@@ -140,20 +140,16 @@ function getTimezoneFromCoordinates(lat, lng) {
 }
 
 /**
- * Compute KP system data: tropical zodiac with Placidus houses
+ * Compute KP system data with sidereal zodiac display
+ * This function calculates KP positions in tropical zodiac but displays them in sidereal
  */
 export function getKPCalculations(bd) {
-    // 1. Set ephemeris path and tropical mode
+    // 1. Set ephemeris path
     swe.swe_set_ephe_path('/ephe/');
-    swe.swe_set_sid_mode(swe.SE_SIDM_NONE, 0, 0); // Ensure tropical mode
 
-    // 2. Parse birth details as local time, convert to UTC correctly
+    // 2. Parse birth details
     const { year, month, day, hour, minute, latitude, longitude, timezone } = bd;
-
-    // Use the provided timezone or try to get it from coordinates
     const tz = timezone || getTimezoneFromCoordinates(latitude, longitude);
-
-    // Create local date and convert to UTC properly
     const localDate = moment.tz([year, month - 1, day, hour, minute], tz);
     const utcDate = localDate.clone().utc();
 
@@ -166,7 +162,15 @@ export function getKPCalculations(bd) {
         swe.SE_GREG_CAL
     );
 
-    // 4. Calculate tropical planetary positions
+    // 4. Calculate Lahiri ayanamsa
+    swe.swe_set_sid_mode(swe.SE_SIDM_LAHIRI, 0, 0);
+    const ayanamsa = swe.swe_get_ayanamsa_ut(jd);
+    console.log(`Lahiri ayanamsa: ${ayanamsa.toFixed(2)}°`);
+
+    // 5. Set to tropical mode for calculations
+    swe.swe_set_sid_mode(swe.SE_SIDM_NONE, 0, 0);
+
+    // 6. Define planets
     const planets = [
         { name: 'Sun', idx: swe.SE_SUN },
         { name: 'Moon', idx: swe.SE_MOON },
@@ -179,49 +183,93 @@ export function getKPCalculations(bd) {
         { name: 'Ketu', idx: swe.SE_TRUE_NODE }
     ];
 
-    const tropicalPositions = planets.map(p => {
-        const res = swe.swe_calc_ut(jd, p.idx, swe.SEFLG_SPEED);
-        let lon = res.longitude;
-        if (p.name === 'Ketu') lon = (lon + 180) % 360;
-        return { planet: p.name, degree: lon };
-    });
+    // 7. Get planetary positions (tropical) and convert to sidereal
+    const planetPositions = [];
 
-    // 5. Calculate Placidus house cusps
+    for (const planet of planets) {
+        // Calculate tropical position
+        const res = swe.swe_calc_ut(jd, planet.idx, swe.SEFLG_SPEED);
+        let tropicalDegree = res.longitude;
+
+        // Special case for Ketu
+        if (planet.name === 'Ketu') {
+            tropicalDegree = (tropicalDegree + 180) % 360;
+        }
+
+        // Convert to sidereal
+        const siderealDegree = (tropicalDegree - ayanamsa + 360) % 360;
+
+        planetPositions.push({
+            planet: planet.name,
+            tropicalDegree,
+            siderealDegree
+        });
+    }
+
+    // 8. Calculate house cusps (Placidus)
     const houses = swe.swe_houses(jd, latitude, longitude, 'P');
-    const cuspsArray = houses.house;
-    const houseCuspsK = cuspsArray.map((deg, i) => ({ cusp: i + 1, degree: deg }));
+    const houseCusps = [];
 
-    // 6. KP sub-lord tables
-    const nak = 13 + 20 / 60;
-    const subSz = nak / 9;
+    for (let i = 0; i < 12; i++) {
+        const tropicalDegree = houses.house[i];
+        const siderealDegree = (tropicalDegree - ayanamsa + 360) % 360;
+
+        houseCusps.push({
+            cusp: i + 1,
+            tropicalDegree,
+            siderealDegree
+        });
+    }
+
+    // 9. KP calculations
+    const nakshatra_span = 13 + (20 / 60); // 13°20'
+    const sub_division = 9;
+    const sub_span = nakshatra_span / sub_division;
+
     const STAR_LORDS = [
-        'Ke', 'Ve', 'Su', 'Mo', 'Ma', 'Ra', 'Ju', 'Sa', 'Me',
-        'Ke', 'Ve', 'Su', 'Mo', 'Ma', 'Ra', 'Ju', 'Sa', 'Me',
-        'Ke', 'Ve', 'Su', 'Mo', 'Ma', 'Ra', 'Ju', 'Sa', 'Me'
+        "Ke", "Ve", "Su", "Mo", "Ma", "Ra", "Ju", "Sa", "Me",
+        "Ke", "Ve", "Su", "Mo", "Ma", "Ra", "Ju", "Sa", "Me",
+        "Ke", "Ve", "Su", "Mo", "Ma", "Ra", "Ju", "Sa", "Me"
     ];
-    const SUB_LORDS = STAR_LORDS.map((_, i) =>
-        STAR_LORDS.slice(i).concat(STAR_LORDS.slice(0, i))
-    );
 
-    const kpPositions = tropicalPositions.map(p => {
-        const comp = p.degree % 360;
-        const starIndex = Math.floor(comp / nak);
-        const intra = comp % nak;
-        const subIndex = Math.floor(intra / subSz);
-        return {
+    const SUB_LORD_ORDER = ["Ke", "Ve", "Su", "Mo", "Ma", "Ra", "Ju", "Sa", "Me"];
+
+    const kpPositions = [];
+
+    for (const p of planetPositions) {
+        // Use TROPICAL degrees for KP calculations
+        const tropicalDegree = p.tropicalDegree;
+
+        // Calculate nakshatra
+        const nakshatra_no = Math.floor(tropicalDegree / nakshatra_span);
+        const star_lord = STAR_LORDS[nakshatra_no];
+
+        // Calculate sub-division
+        const position_in_nakshatra = tropicalDegree % nakshatra_span;
+        const sub_no = Math.floor(position_in_nakshatra / sub_span);
+
+        // Find sub-lord
+        const start_idx = SUB_LORD_ORDER.indexOf(star_lord);
+        const sub_lord = SUB_LORD_ORDER[(start_idx + sub_no) % 9];
+
+        kpPositions.push({
             planet: p.planet,
-            compoundDegree: comp.toFixed(2),
-            starLord: STAR_LORDS[starIndex],
-            subLord: SUB_LORDS[starIndex][subIndex]
-        };
-    });
+            compoundDegree: p.siderealDegree, // SIDEREAL for display
+            starLord: star_lord,
+            subLord: sub_lord
+        });
+    }
 
+    // 10. Format final result
     return {
         kpPositions,
-        houseCusps: houseCuspsK,
+        houseCusps: houseCusps.map(c => ({
+            cusp: c.cusp,
+            degree: c.siderealDegree // SIDEREAL for display
+        })),
         ascendant: {
-            degree: houses.ascendant,
-            sign: Math.floor(houses.ascendant / 30) % 12
+            degree: (houses.ascendant - ayanamsa + 360) % 360, // SIDEREAL
+            sign: Math.floor(((houses.ascendant - ayanamsa + 360) % 360) / 30)
         }
     };
 }
