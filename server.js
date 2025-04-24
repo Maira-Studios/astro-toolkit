@@ -21,7 +21,7 @@ app.use(bodyParser.json());
 app.post('/chart', async (req, res) => {
     const bd = req.body;
     try {
-        console.log("Received birth data:", bd);
+        // console.log("Received birth data:", bd);
 
         // Add timezone for New Delhi if none provided
         if (!bd.timezone) {

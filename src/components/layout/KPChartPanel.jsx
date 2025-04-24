@@ -26,7 +26,8 @@ const KPChartPanel = ({ kpData }) => {
                 <thead>
                     <tr>
                         <th className="border px-2">{t('Planet')}</th>
-                        <th className="border px-2">{t('Compound °')}</th>
+                        <th className="border px-2">{t('Degrees')}</th>
+                        <th className="border px-2">{t('Rasi Lord')}</th>
                         <th className="border px-2">{t('Star Lord')}</th>
                         <th className="border px-2">{t('Sub Lord')}</th>
                     </tr>
@@ -36,6 +37,7 @@ const KPChartPanel = ({ kpData }) => {
                         <tr key={kp.planet}>
                             <td className="border px-2">{kp.planet}</td>
                             <td className="border px-2">{formatDegree(kp.compoundDegree)}</td>
+                            <td className="border px-2">{kp.rasiLord}</td>
                             <td className="border px-2">{kp.starLord}</td>
                             <td className="border px-2">{kp.subLord}</td>
                         </tr>

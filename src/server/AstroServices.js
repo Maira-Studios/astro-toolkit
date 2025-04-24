@@ -140,8 +140,8 @@ function getTimezoneFromCoordinates(lat, lng) {
 }
 
 /**
- * Compute KP system data with sidereal zodiac display
- * This function calculates KP positions in tropical zodiac but displays them in sidereal
+ * Compute KP system data with sidereal zodiac positions
+ * Including rasi (sign) lord for display
  */
 export function getKPCalculations(bd) {
     // 1. Set ephemeris path
@@ -165,12 +165,10 @@ export function getKPCalculations(bd) {
     // 4. Calculate Lahiri ayanamsa
     swe.swe_set_sid_mode(swe.SE_SIDM_LAHIRI, 0, 0);
     const ayanamsa = swe.swe_get_ayanamsa_ut(jd);
-    console.log(`Lahiri ayanamsa: ${ayanamsa.toFixed(2)}°`);
 
-    // 5. Set to tropical mode for calculations
-    swe.swe_set_sid_mode(swe.SE_SIDM_NONE, 0, 0);
+    // 5. Calculate planets in tropical and convert to sidereal
+    swe.swe_set_sid_mode(swe.SE_SIDM_NONE, 0, 0); // Ensure tropical mode
 
-    // 6. Define planets
     const planets = [
         { name: 'Sun', idx: swe.SE_SUN },
         { name: 'Moon', idx: swe.SE_MOON },
@@ -183,7 +181,6 @@ export function getKPCalculations(bd) {
         { name: 'Ketu', idx: swe.SE_TRUE_NODE }
     ];
 
-    // 7. Get planetary positions (tropical) and convert to sidereal
     const planetPositions = [];
 
     for (const planet of planets) {
@@ -206,7 +203,7 @@ export function getKPCalculations(bd) {
         });
     }
 
-    // 8. Calculate house cusps (Placidus)
+    // 6. Calculate house cusps (Placidus)
     const houses = swe.swe_houses(jd, latitude, longitude, 'P');
     const houseCusps = [];
 
@@ -221,7 +218,12 @@ export function getKPCalculations(bd) {
         });
     }
 
-    // 9. KP calculations
+    // 7. Define lords for calculations
+
+    // Rasi (sign) lords in zodiacal order (Aries to Pisces)
+    const RASI_LORDS = ["Ma", "Ve", "Me", "Mo", "Su", "Me", "Ve", "Ma", "Ju", "Sa", "Sa", "Ju"];
+
+    // KP nakshatra lords
     const nakshatra_span = 13 + (20 / 60); // 13°20'
     const sub_division = 9;
     const sub_span = nakshatra_span / sub_division;
@@ -237,15 +239,19 @@ export function getKPCalculations(bd) {
     const kpPositions = [];
 
     for (const p of planetPositions) {
-        // Use TROPICAL degrees for KP calculations
-        const tropicalDegree = p.tropicalDegree;
+        // Use SIDEREAL degrees for all calculations
+        const siderealDegree = p.siderealDegree;
+
+        // Calculate rasi (sign) and rasi lord
+        const rasi = Math.floor(siderealDegree / 30);
+        const rasiLord = RASI_LORDS[rasi];
 
         // Calculate nakshatra
-        const nakshatra_no = Math.floor(tropicalDegree / nakshatra_span);
+        const nakshatra_no = Math.floor(siderealDegree / nakshatra_span);
         const star_lord = STAR_LORDS[nakshatra_no];
 
         // Calculate sub-division
-        const position_in_nakshatra = tropicalDegree % nakshatra_span;
+        const position_in_nakshatra = siderealDegree % nakshatra_span;
         const sub_no = Math.floor(position_in_nakshatra / sub_span);
 
         // Find sub-lord
@@ -254,22 +260,30 @@ export function getKPCalculations(bd) {
 
         kpPositions.push({
             planet: p.planet,
-            compoundDegree: p.siderealDegree, // SIDEREAL for display
+            compoundDegree: siderealDegree,
+            rasiLord: rasiLord,      // Added rasi lord
             starLord: star_lord,
             subLord: sub_lord
         });
     }
 
-    // 10. Format final result
+    // 8. Also calculate rasi lords for house cusps
+    const houseCuspsWithLords = houseCusps.map(c => {
+        const rasi = Math.floor(c.siderealDegree / 30);
+        return {
+            cusp: c.cusp,
+            degree: c.siderealDegree,
+            rasiLord: RASI_LORDS[rasi]
+        };
+    });
+
     return {
         kpPositions,
-        houseCusps: houseCusps.map(c => ({
-            cusp: c.cusp,
-            degree: c.siderealDegree // SIDEREAL for display
-        })),
+        houseCusps: houseCuspsWithLords,
         ascendant: {
-            degree: (houses.ascendant - ayanamsa + 360) % 360, // SIDEREAL
-            sign: Math.floor(((houses.ascendant - ayanamsa + 360) % 360) / 30)
+            degree: (houses.ascendant - ayanamsa + 360) % 360,
+            sign: Math.floor(((houses.ascendant - ayanamsa + 360) % 360) / 30),
+            rasiLord: RASI_LORDS[Math.floor(((houses.ascendant - ayanamsa + 360) % 360) / 30)]
         }
     };
 }
