@@ -9,7 +9,7 @@ import { getVedicChart, getKPCalculations } from "./src/server/AstroServices.js"
 const app = express();
 
 // 1. Enable CORS for React dev server origin
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({ origin: 'http://localhost:5174' }));
 
 // 2. Parse JSON bodies
 app.use(bodyParser.json());
