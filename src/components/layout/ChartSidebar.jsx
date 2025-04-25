@@ -125,9 +125,27 @@ const ChartSidebar = ({ inSidebar = false, onChartCreated = null }) => {
                             <thead className="bg-gray-50"><tr><th>{t('Name')}</th><th>{t('Date')}</th><th>{t('Actions')}</th></tr></thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {charts.map(c => (
-                                    <tr key={c.id}><td>{c.name}</td><td>{c.date} {c.time}</td><td><button onClick={() => loadChart(c.id)}>{t('View')}</button><button onClick={() => handleDelete(c.id)} className="ml-2">{t('Delete')}</button></td></tr>
+                                    <tr key={c.id} className="hover:bg-gray-50">
+                                        <td className="px-4 py-2 text-sm">{c.name}</td>
+                                        <td className="px-4 py-2 text-sm">{c.date} {c.time}</td>
+                                        <td className="px-4 py-2 text-sm space-x-2">
+                                            <button
+                                                onClick={() => loadChart(c.id)}
+                                                className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                                            >
+                                                {t('Load')}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(c.id)}
+                                                className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                                            >
+                                                {t('Delete')}
+                                            </button>
+                                        </td>
+                                    </tr>
                                 ))}
                             </tbody>
+
                         </table>
                     )}
                 </div>
