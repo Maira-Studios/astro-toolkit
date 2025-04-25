@@ -59,8 +59,10 @@ const ChartSidebar = ({ inSidebar = false, onChartCreated = null }) => {
             if (!res.ok) throw new Error(`Status ${res.status}`);
 
             const data = await res.json();
-            const newChart = addChart({ ...birthDetails, location: address, vedicData: data.vedic, kpData: data.kp });
-            loadChart(newChart.id);
+            //const newChart = addChart({ ...birthDetails, location: address, vedicData: data.vedic, kpData: data.kp });
+            //loadChart(newChart.id);
+            const newChart = addChart({ ...birthDetails, vedicData: data.vedic, kpData: data.kp });
+            loadChart(newChart);
             onChartCreated?.(newChart);
             if (inSidebar) setBirthDetails({ name: '', date: '', time: '', latitude: '', longitude: '' }); setAddress('');
         } catch (err) {
