@@ -17,7 +17,7 @@ import KpTables from './pages/tables/KPTables.jsx';
 const navigationItems = [
   {
     id: 'new-chart',
-    label: 'New Chart',
+    label: 'Charts Database',
     path: '/new-chart'
   },
   {
