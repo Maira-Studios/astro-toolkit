@@ -100,7 +100,7 @@ const App = () => {
       title: 'New Chart',
       component: (
         <ChartSidebar
-          onChartCreated={() => setActivePath('/astro-vastu/hit-calculator')}
+        //onChartCreated={() => setActivePath('/tables/parasharib')}
         />
       )
     },
