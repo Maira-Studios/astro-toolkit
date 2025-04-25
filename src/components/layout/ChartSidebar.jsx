@@ -1,17 +1,24 @@
 // src/components/layout/ChartSidebar.jsx
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import TabSelector from '../common/TabSelector.jsx';
 import VedicChartPanel from './VedicChartPanel.jsx';
 import KPChartPanel from './KPChartPanel.jsx';
 import PlaceholderComponent from '../common/PlaceholderComponent.jsx';
+import { useChartContext } from '../../context/ChartContext.jsx'; // Import the context hook
 import PlacesAutocomplete, {
     geocodeByAddress,
     getLatLng
 } from 'react-places-autocomplete';
 
-const ChartSidebar = ({ inSidebar = false }) => {
+// Define API URL based on environment
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+const ChartSidebar = ({ inSidebar = false, onChartCreated = null }) => {
     const { t } = useTranslation();
+    const { addChart, charts, deleteChart, loadChart } = useChartContext(); // Use the chart context
+
     const tabs = [
         { id: 'vedic', label: t('Vedic') },
         { id: 'kp', label: t('KP') }
@@ -19,9 +26,9 @@ const ChartSidebar = ({ inSidebar = false }) => {
 
     const [activeTab, setActiveTab] = useState('vedic');
     const [birthDetails, setBirthDetails] = useState({
-        name: '', // Added name field
-        date: '', // yyyy-mm-dd
-        time: '', // hh:mm
+        name: '',
+        date: '',
+        time: '',
         latitude: '',
         longitude: ''
     });
@@ -55,7 +62,8 @@ const ChartSidebar = ({ inSidebar = false }) => {
                 const coords = await getLatLng(results[0]);
                 latitude = coords.lat;
                 longitude = coords.lng;
-            } catch {
+            } catch (error) {
+                console.error('Geocoding error:', error);
                 alert('Could not determine coordinates.');
                 return;
             }
@@ -66,7 +74,7 @@ const ChartSidebar = ({ inSidebar = false }) => {
         const [hour, minute] = birthDetails.time.split(':');
 
         try {
-            const res = await fetch('http://localhost:3001/chart', {
+            const res = await fetch(`${API_BASE_URL}/chart`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -76,13 +84,61 @@ const ChartSidebar = ({ inSidebar = false }) => {
                     latitude, longitude
                 })
             });
-            const { vedic, kp } = await res.json();
-            setVedicChart(vedic);
-            setKpData(kp);
-        } catch {
-            alert('Failed to generate chart.');
+
+            if (!res.ok) {
+                throw new Error(`Server responded with status: ${res.status}`);
+            }
+
+            const data = await res.json();
+
+            if (!data || !data.vedic || !data.kp) {
+                throw new Error('Invalid response format from server');
+            }
+
+            setVedicChart(data.vedic);
+            setKpData(data.kp);
+
+            // Add the new chart to context
+            const newChart = addChart({
+                name: birthDetails.name,
+                date: birthDetails.date,
+                time: birthDetails.time,
+                location: address,
+                latitude,
+                longitude,
+                vedicData: data.vedic,
+                kpData: data.kp
+            });
+
+            // Call the callback if provided (e.g., to navigate or update parent)
+            if (onChartCreated) {
+                onChartCreated(newChart);
+            }
+
+            // Reset form if in the sidebar to create another chart
+            if (inSidebar) {
+                setBirthDetails({
+                    name: '',
+                    date: '',
+                    time: '',
+                    latitude: '',
+                    longitude: ''
+                });
+                setAddress('');
+            }
+
+        } catch (error) {
+            console.error('Chart generation error:', error);
+            alert(`Failed to generate chart: ${error.message || 'Unknown error'}`);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Function to handle chart deletion
+    const handleDeleteChart = (chartId) => {
+        if (window.confirm(t('Are you sure you want to delete this chart?'))) {
+            deleteChart(chartId);
         }
     };
 
@@ -172,12 +228,20 @@ const ChartSidebar = ({ inSidebar = false }) => {
                     disabled={loading}
                     className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
                 >
-                    {loading ? t('Generating…') : t('Generate Chart')}
+                    {loading ? (
+                        <span className="flex items-center justify-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            {t('Generating…')}
+                        </span>
+                    ) : t('Generate Chart')}
                 </button>
             </div>
 
-            {/* Sample chart list */}
-            {!inSidebar && (
+            {/* Saved charts list - only show if not in sidebar and there are charts */}
+            {!inSidebar && charts.length > 0 && (
                 <div className="bg-white rounded-lg shadow p-4 mb-6">
                     <h2 className="text-xl font-semibold mb-4">{t('Saved Charts')}</h2>
                     <div className="overflow-x-auto">
@@ -199,36 +263,44 @@ const ChartSidebar = ({ inSidebar = false }) => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {/* Sample saved chart */}
-                                <tr>
-                                    <td className="px-4 py-2 whitespace-nowrap text-sm">John Doe</td>
-                                    <td className="px-4 py-2 whitespace-nowrap text-sm">2025-04-15 14:30</td>
-                                    <td className="px-4 py-2 whitespace-nowrap text-sm">New York, USA</td>
-                                    <td className="px-4 py-2 whitespace-nowrap text-sm">
-                                        <button className="text-blue-600 hover:text-blue-900 mr-3">
-                                            {t('View')}
-                                        </button>
-                                        <button className="text-red-600 hover:text-red-900">
-                                            {t('Delete')}
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td className="px-4 py-2 whitespace-nowrap text-sm">Jane Smith</td>
-                                    <td className="px-4 py-2 whitespace-nowrap text-sm">2025-03-22 09:15</td>
-                                    <td className="px-4 py-2 whitespace-nowrap text-sm">London, UK</td>
-                                    <td className="px-4 py-2 whitespace-nowrap text-sm">
-                                        <button className="text-blue-600 hover:text-blue-900 mr-3">
-                                            {t('View')}
-                                        </button>
-                                        <button className="text-red-600 hover:text-red-900">
-                                            {t('Delete')}
-                                        </button>
-                                    </td>
-                                </tr>
+                                {charts.map(chart => (
+                                    <tr key={chart.id}>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm">{chart.name}</td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                            {chart.date} {chart.time}
+                                        </td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm">{chart.location}</td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                            <button
+                                                className="text-blue-600 hover:text-blue-900 mr-3"
+                                                onClick={() => loadChart(chart.id)}
+                                            >
+                                                {t('View')}
+                                            </button>
+                                            <button
+                                                className="text-red-600 hover:text-red-900"
+                                                onClick={() => handleDeleteChart(chart.id)}
+                                            >
+                                                {t('Delete')}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
+                </div>
+            )}
+
+            {/* Show a message if no charts exist and not in sidebar */}
+            {!inSidebar && charts.length === 0 && !vedicChart && !kpData && (
+                <div className="bg-white rounded-lg shadow p-6 mb-6 text-center">
+                    <div className="text-gray-400 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <p className="text-gray-600">{t('No saved charts yet. Create your first chart above.')}</p>
                 </div>
             )}
 

@@ -1,9 +1,21 @@
 // src/components/layout/MainNavigation.jsx
 import React, { useState } from 'react';
+import {
+    PlusCircle,
+    Calendar,
+    Table2,
+    Settings,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    Star,
+    AlertCircle,
+    User,
+    Compass
+} from 'lucide-react';
 
 const MainNavigation = ({ items, activePath, onNavigate, collapsed, toggleCollapse }) => {
     const [expandedMenus, setExpandedMenus] = useState({
-        'systems': true, // Start with Systems expanded
         'astro-vastu': true // Start with Astro Vastu expanded
     });
 
@@ -14,11 +26,67 @@ const MainNavigation = ({ items, activePath, onNavigate, collapsed, toggleCollap
         }));
     };
 
+    // Helper function to determine if a path is a "coming soon" section
+    const isComingSoon = (path) => {
+        // Only these items are "coming soon"
+        const comingSoonPaths = [
+            '/bnn',
+            '/horoscope',
+            '/settings',
+            '/bnn/directions',
+            '/bnn/strings',
+            '/horoscope/parashari',
+            '/horoscope/kp'
+        ];
+
+        return comingSoonPaths.some(comingSoonPath =>
+            path === comingSoonPath || path.startsWith(comingSoonPath + '/')
+        );
+    };
+
+    // Function to get the appropriate icon for a menu item
+    const getItemIcon = (item) => {
+        // Define icons based on item ID
+        switch (item.id) {
+            case 'new-chart':
+                return <PlusCircle size={20} />;
+            case 'horoscope':
+                return <Calendar size={20} />;
+            case 'tables':
+                return <Table2 size={20} />;
+            case 'parashari':
+                return <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center">
+                    <span className="text-xs">P</span>
+                </div>;
+            case 'kp':
+                return <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center">
+                    <span className="text-xs">K</span>
+                </div>;
+            case 'astro-vastu':
+                return <Star size={20} />;
+            case 'hit-calculator':
+                return <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center">
+                    <span className="text-xs">H</span>
+                </div>;
+            case 'bnn':
+                return <Compass size={20} />;
+            case 'settings':
+                return <Settings size={20} />;
+            default:
+                return (
+                    <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center">
+                        <span className="text-xs">{item.label.charAt(0)}</span>
+                    </div>
+                );
+        }
+    };
+
     // Recursive function to render menu items with any level of nesting
     const renderMenuItem = (item, level = 0) => {
         const isActive = activePath === item.path || activePath.startsWith(item.path + '/');
         const hasSubmenu = item.submenu && item.submenu.length > 0;
         const isExpanded = expandedMenus[item.id];
+        const comingSoonItem = isComingSoon(item.path);
 
         return (
             <li key={item.id} className="mb-1">
@@ -27,7 +95,7 @@ const MainNavigation = ({ items, activePath, onNavigate, collapsed, toggleCollap
                     className={`flex items-center ${isActive
                         ? 'bg-gray-700'
                         : 'hover:bg-gray-700'
-                        } px-4 py-2 cursor-pointer`}
+                        } px-4 py-2 cursor-pointer rounded-md`}
                     style={{ paddingLeft: `${level * 8 + 16}px` }}
                     onClick={() => {
                         if (hasSubmenu) {
@@ -37,24 +105,29 @@ const MainNavigation = ({ items, activePath, onNavigate, collapsed, toggleCollap
                         }
                     }}
                 >
-                    {/* Icon placeholder - replace with actual icons */}
-                    <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center">
-                        <span className="text-xs">{item.label.charAt(0)}</span>
+                    {/* Icon */}
+                    <div className="text-gray-300">
+                        {getItemIcon(item)}
                     </div>
+
+                    {/* Coming soon indicator */}
+                    {comingSoonItem && (
+                        <div className="text-amber-500 ml-2">
+                            <AlertCircle size={16} />
+                        </div>
+                    )}
 
                     {!collapsed && (
                         <>
-                            <span className="ml-3">{item.label}</span>
+                            <span className={`ml-3 ${comingSoonItem ? 'text-gray-400' : 'text-gray-200'}`}>
+                                {item.label}
+                            </span>
+
                             {/* Dropdown indicator if item has submenu */}
                             {hasSubmenu && (
-                                <svg
+                                <ChevronDown
                                     className={`w-4 h-4 ml-auto transition-transform ${isExpanded ? 'transform rotate-180' : ''}`}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                </svg>
+                                />
                             )}
                         </>
                     )}
@@ -80,12 +153,8 @@ const MainNavigation = ({ items, activePath, onNavigate, collapsed, toggleCollap
                     onClick={toggleCollapse}
                 >
                     {collapsed ?
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                        </svg> :
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                        </svg>
+                        <ChevronRight className="w-6 h-6" /> :
+                        <ChevronLeft className="w-6 h-6" />
                     }
                 </button>
             </div>
@@ -101,8 +170,8 @@ const MainNavigation = ({ items, activePath, onNavigate, collapsed, toggleCollap
             {!collapsed && (
                 <div className="border-t border-gray-700 p-4">
                     <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                            <span className="text-sm">U</span>
+                        <div className="text-blue-500">
+                            <User size={24} />
                         </div>
                         <div className="ml-3">
                             <p className="text-sm font-medium">User Name</p>

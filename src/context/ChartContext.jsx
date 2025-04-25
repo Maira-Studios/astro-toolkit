@@ -1,19 +1,36 @@
 // src/context/ChartContext.jsx
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const ChartContext = createContext();
 
 export const useChartContext = () => useContext(ChartContext);
 
 export const ChartProvider = ({ children }) => {
-    const [charts, setCharts] = useState([]);
+    // Initialize state from localStorage if available
+    const [charts, setCharts] = useState(() => {
+        const savedCharts = localStorage.getItem('astroCharts');
+        return savedCharts ? JSON.parse(savedCharts) : [];
+    });
+
     const [currentChart, setCurrentChart] = useState(null);
+
+    // Save charts to localStorage whenever they change
+    useEffect(() => {
+        localStorage.setItem('astroCharts', JSON.stringify(charts));
+    }, [charts]);
+
+    // Set current chart to the first one if it exists and none is selected
+    useEffect(() => {
+        if (!currentChart && charts.length > 0) {
+            setCurrentChart(charts[0]);
+        }
+    }, [charts, currentChart]);
 
     // Add a new chart
     const addChart = (chartData) => {
         const newChart = {
             id: Date.now().toString(),
-            created: new Date(),
+            created: new Date().toISOString(),
             ...chartData
         };
 
@@ -47,7 +64,21 @@ export const ChartProvider = ({ children }) => {
         setCharts(prev => prev.filter(chart => chart.id !== chartId));
 
         if (currentChart?.id === chartId) {
+            // Set current chart to the first available chart or null
+            const remainingCharts = charts.filter(chart => chart.id !== chartId);
+            setCurrentChart(remainingCharts.length > 0 ? remainingCharts[0] : null);
+        }
+    };
+
+    // Get count of charts
+    const getChartCount = () => charts.length;
+
+    // Clear all charts (for testing or reset)
+    const clearAllCharts = () => {
+        if (window.confirm('Are you sure you want to delete all charts? This cannot be undone.')) {
+            setCharts([]);
             setCurrentChart(null);
+            localStorage.removeItem('astroCharts');
         }
     };
 
@@ -59,7 +90,9 @@ export const ChartProvider = ({ children }) => {
             loadChart,
             updateChart,
             deleteChart,
-            setCurrentChart
+            setCurrentChart,
+            getChartCount,
+            clearAllCharts
         }}>
             {children}
         </ChartContext.Provider>

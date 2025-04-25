@@ -3,18 +3,47 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Sidebar from './components/layout/Sidebar.jsx';
 import MainNavigation from './components/layout/MainNavigation.jsx';
-import './i189.js'; // Import the i18n configuration
+import './i18n.js';
+import { useChartContext } from './context/ChartContext.jsx';
 
-// Import your existing page components
-import VastuCalculator from './pages/VastuCalculator';
+// Import page components
 import ChartSidebar from './components/layout/ChartSidebar.jsx';
+import VastuCalculator from './pages/VastuCalculator';
+import ParashariTables from './pages/tables/ParashariTables.jsx'; // You would need to create this component
+import ComingSoonPage from './pages/ComingSoonPage.jsx'; // Create a reusable "Coming Soon" component
 
-// Define navigation items with the new structure
+// Define navigation items with the reorganized structure
 const navigationItems = [
   {
     id: 'new-chart',
     label: 'New Chart',
     path: '/new-chart'
+  },
+  {
+    id: 'tables',
+    label: 'Tables',
+    path: '/tables',
+    submenu: [
+      { id: 'parashari', label: 'Parashari', path: '/tables/parashari' },
+      { id: 'kp', label: 'KP', path: '/tables/kp' },
+    ]
+  },
+  {
+    id: 'astro-vastu',
+    label: 'Astro Vastu',
+    path: '/astro-vastu',
+    submenu: [
+      { id: 'hit-calculator', label: 'Hit Calculator', path: '/astro-vastu/hit-calculator' },
+    ]
+  },
+  {
+    id: 'bnn',
+    label: 'BNN',
+    path: '/bnn',
+    submenu: [
+      { id: 'directions', label: 'Directions', path: '/bnn/directions' },
+      { id: 'strings', label: 'Strings', path: '/bnn/strings' },
+    ]
   },
   {
     id: 'horoscope',
@@ -26,39 +55,6 @@ const navigationItems = [
     ]
   },
   {
-    id: 'tables',
-    label: 'Tables',
-    path: '/tables',
-    submenu: [
-      { id: 'parashari-tables', label: 'Parashari', path: '/tables/parashari' },
-      { id: 'kp-tables', label: 'KP', path: '/tables/kp' },
-    ]
-  },
-  {
-    id: 'systems',
-    label: 'Systems',
-    path: '/systems',
-    submenu: [
-      {
-        id: 'astro-vastu',
-        label: 'Astro Vastu',
-        path: '/systems/astro-vastu',
-        submenu: [
-          { id: 'hit-calculator', label: 'Hit Calculator', path: '/systems/astro-vastu/hit-calculator' },
-        ]
-      },
-      {
-        id: 'bnn',
-        label: 'BNN',
-        path: '/systems/bnn',
-        submenu: [
-          { id: 'directions', label: 'Directions', path: '/systems/bnn/directions' },
-          { id: 'strings', label: 'Strings', path: '/systems/bnn/strings' },
-        ]
-      }
-    ]
-  },
-  {
     id: 'settings',
     label: 'Settings',
     path: '/settings'
@@ -67,18 +63,13 @@ const navigationItems = [
 
 const App = () => {
   const { t } = useTranslation();
-  const [activePath, setActivePath] = useState('/systems/astro-vastu/hit-calculator'); // Default to Hit Calculator
+  const [activePath, setActivePath] = useState('/astro-vastu/hit-calculator');
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [rightSidebarContent, setRightSidebarContent] = useState(null);
 
-  // Current chart state
-  const [currentChart, setCurrentChart] = useState({
-    name: "John Doe",
-    date: "2025-04-15",
-    time: "14:30",
-    location: "New York, USA"
-  });
+  // Use chart context
+  const { currentChart } = useChartContext();
 
   const handleNavigation = (path) => {
     setActivePath(path);
@@ -102,110 +93,59 @@ const App = () => {
     setRightSidebarOpen(false);
   };
 
-  const openNewChartSidebar = () => {
-    openRightSidebar({
-      title: t('New Chart'),
-      content: <ChartSidebar inSidebar={true} />
-    });
-  };
+  // Map paths to their corresponding components
+  const pageComponentMap = {
+    // New Chart
+    '/new-chart': {
+      title: 'New Chart',
+      component: (
+        <ChartSidebar
+          onChartCreated={() => setActivePath('/astro-vastu/hit-calculator')}
+        />
+      )
+    },
 
-  // For Parashari Tables
-  const renderParashariTables = () => {
-    return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6">{t('Parashari Tables')}</h1>
-        <div className="bg-white rounded-lg shadow p-6">
-          {/* This would render your existing Vedic table logic */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('Planet')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('Sign')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('Degrees')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('House')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {/* This would be populated from your calculations */}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
+    // Astro Vastu - Hit Calculator
+    '/astro-vastu/hit-calculator': {
+      title: 'Hit Calculator',
+      component: (
+        <VastuCalculator
+          openSidebar={openRightSidebar}
+          hideButtons={true}
+          navigateToNewChart={() => setActivePath('/new-chart')}
+        />
+      )
+    },
+
+    // Tables - Parashari
+    '/tables/parashari': {
+      title: 'Parashari Tables',
+      component: <ParashariTables currentChart={currentChart} />
+    }
+
+    // Add more path mappings as components are developed
   };
 
   // Determine what content to show based on active path
   const renderMainContent = () => {
-    // For New Chart, use the existing ChartSidebar directly in the main content area
-    if (activePath === '/new-chart') {
+    // If we have a mapping for this path, render the component
+    if (pageComponentMap[activePath]) {
+      const { title, component } = pageComponentMap[activePath];
+
+      // For most components, wrap them with a title
       return (
         <div className="p-6">
-          <h1 className="text-2xl font-bold mb-6">{t('New Chart')}</h1>
-          <ChartSidebar />
+          <h1 className="text-2xl font-bold mb-6">{t(title)}</h1>
+          {component}
         </div>
       );
     }
-    // For Hit Calculator, show the existing VastuCalculator component
-    else if (activePath === '/systems/astro-vastu/hit-calculator') {
-      return (
-        <div>
-          {/* Current Chart Banner */}
-          <div className="bg-white border-b p-4 flex justify-between items-center">
-            <div>
-              <h2 className="text-lg font-semibold">{currentChart.name}</h2>
-              <p className="text-sm text-gray-600">
-                {currentChart.date} {currentChart.time} | {currentChart.location}
-              </p>
-            </div>
-            <div className="flex space-x-2">
-              <select className="border rounded px-3 py-1">
-                <option value="">{t('Select Chart')}</option>
-                <option value="1">John Doe</option>
-                <option value="2">Jane Smith</option>
-              </select>
-              <button
-                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                onClick={openNewChartSidebar}
-              >
-                {t('New Chart')}
-              </button>
-            </div>
-          </div>
 
-          {/* Modified VastuCalculator with buttons removed */}
-          <VastuCalculator
-            openSidebar={openRightSidebar}
-            hideButtons={true}
-          />
-        </div>
-      );
-    }
-    // For Parashari Tables
-    else if (activePath === '/tables/parashari') {
-      return renderParashariTables();
-    }
-
-    // For other paths, show a placeholder
+    // For any unmapped path, show the coming soon page
     return (
-      <div className="flex items-center justify-center h-full p-6">
-        <div className="bg-white rounded-lg shadow p-6 max-w-md">
-          <h2 className="text-xl font-semibold mb-4">{t('Coming Soon')}</h2>
-          <p>{t('This section is under development.')}</p>
-          <p className="mt-2">
-            {t('Path')}: {activePath}
-          </p>
-        </div>
-      </div>
+      <ComingSoonPage
+        path={activePath}
+      />
     );
   };
 

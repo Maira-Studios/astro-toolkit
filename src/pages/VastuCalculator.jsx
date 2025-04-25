@@ -1,55 +1,24 @@
 // src/pages/VastuCalculator.jsx
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useChartContext } from '../context/ChartContext.jsx';
 import ResultsTable from "../components/results/ResultsTable.jsx";
 import TabSelector from '../components/common/TabSelector.jsx';
 import PlanetInput from "../components/input/PlanetInput.jsx";
 import HouseInput from "../components/input/HouseInput.jsx";
 import PlanetRecommender from '../components/input/PlanetRecommender.jsx';
 import LanguageSelector from '../components/common/LanguageSelector.jsx';
-import ChartSidebar from '../components/layout/ChartSidebar.jsx';
 
-const VastuCalculator = ({ openSidebar, hideButtons = false }) => {
+const VastuCalculator = ({ openSidebar, hideButtons = false, navigateToNewChart = null }) => {
     const { t, i18n } = useTranslation();
+    const { currentChart } = useChartContext();
 
-    // State for planets and houses
-    const [planets, setPlanets] = useState([
-        { id: 'sun', name: 'Sun', position: '057-08', canHit: true },
-        { id: 'moon', name: 'Moon', position: '070-40', canHit: true },
-        { id: 'mars', name: 'Mars', position: '054-49', canHit: true },
-        { id: 'mercury', name: 'Mercury', position: '033-49', canHit: true },
-        { id: 'jupiter', name: 'Jupiter', position: '220-39', canHit: true },
-        { id: 'venus', name: 'Venus', position: '102-25', canHit: true },
-        { id: 'saturn', name: 'Saturn', position: '184-30', canHit: true },
-        { id: 'rahu', name: 'Rahu', position: '061-44', canHit: false },
-        { id: 'ketu', name: 'Ketu', position: '241-44', canHit: false }
-    ]);
-
-    const [houses, setHouses] = useState([
-        { number: 1, position: '115-51' },
-        { number: 2, position: '140-53' },
-        { number: 3, position: '169-57' },
-        { number: 4, position: '202-19' },
-        { number: 5, position: '235-18' },
-        { number: 6, position: '266-40' },
-        { number: 7, position: '295-51' },
-        { number: 8, position: '320-53' },
-        { number: 9, position: '349-57' },
-        { number: 10, position: '022-19' },
-        { number: 11, position: '055-18' },
-        { number: 12, position: '086-40' }
-    ]);
+    // State for planets and houses - initialize with empty arrays
+    const [planets, setPlanets] = useState([]);
+    const [houses, setHouses] = useState([]);
 
     // Keep a reference to the current sidebar content to update it
     const [currentSidebarContent, setCurrentSidebarContent] = useState(null);
-
-    // Update planet names when language changes
-    useEffect(() => {
-        setPlanets(prev => prev.map(planet => ({
-            ...planet,
-            name: t(`planets.${planet.id}`)
-        })));
-    }, [i18n.language, t]);
 
     // State for relationship type tabs in main view
     const [activeRelationshipTab, setActiveRelationshipTab] = useState('planet-house');
@@ -60,7 +29,26 @@ const VastuCalculator = ({ openSidebar, hideButtons = false }) => {
     ];
 
     // State for calculation status
-    const [isCalculated, setIsCalculated] = useState(true); // Default to true to show results immediately
+    const [isCalculated, setIsCalculated] = useState(true);
+
+    // Update planet names and positions when language changes or current chart changes
+    useEffect(() => {
+        if (currentChart) {
+            // Extract planet and house data from the chart
+            if (currentChart.vedicData?.planets) {
+                // Apply translation to planet names
+                const translatedPlanets = currentChart.vedicData.planets.map(planet => ({
+                    ...planet,
+                    name: t(`planets.${planet.id}`)
+                }));
+                setPlanets(translatedPlanets);
+            }
+
+            if (currentChart.vedicData?.houses) {
+                setHouses(currentChart.vedicData.houses);
+            }
+        }
+    }, [currentChart, i18n.language, t]);
 
     // Handle planet position change
     const handlePlanetPositionChange = (id, position) => {
@@ -222,6 +210,50 @@ const VastuCalculator = ({ openSidebar, hideButtons = false }) => {
         setIsCalculated(true);
     };
 
+    // If no current chart exists, render an empty state with prompt to create one
+    if (!currentChart) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="text-center p-6 max-w-md">
+                    <div className="text-amber-500 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold mb-4">{t('No Active Chart')}</h2>
+                    <p className="text-gray-600 mb-6">
+                        {t('You need to create or select a chart before using the Hit Calculator.')}
+                    </p>
+                    <button
+                        onClick={() => navigateToNewChart ? navigateToNewChart() : null}
+                        className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 shadow-md"
+                    >
+                        {t('Create New Chart')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // If planets or houses are missing, show loading or error state
+    if (planets.length === 0 || houses.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="text-center p-6 max-w-md">
+                    <div className="text-amber-500 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold mb-4">{t('Loading Chart Data')}</h2>
+                    <p className="text-gray-600">
+                        {t('Please wait while we load the chart data.')}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col h-full">
             {/* Top header with actions - hide if hideButtons is true */}
@@ -232,6 +264,7 @@ const VastuCalculator = ({ openSidebar, hideButtons = false }) => {
                             <LanguageSelector />
                             <button
                                 className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                onClick={() => navigateToNewChart ? navigateToNewChart() : null}
                             >
                                 {t('New Chart')}
                             </button>
