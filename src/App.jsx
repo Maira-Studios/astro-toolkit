@@ -11,6 +11,7 @@ import ChartSidebar from './components/layout/ChartSidebar.jsx';
 import VastuCalculator from './pages/VastuCalculator';
 import ParashariTables from './pages/tables/ParashariTables.jsx'; // You would need to create this component
 import ComingSoonPage from './pages/ComingSoonPage.jsx'; // Create a reusable "Coming Soon" component
+import KpTables from './pages/tables/KPTables.jsx';
 
 // Define navigation items with the reorganized structure
 const navigationItems = [
@@ -121,7 +122,12 @@ const App = () => {
     '/tables/parashari': {
       title: 'Parashari Tables',
       component: <ParashariTables currentChart={currentChart} />
-    }
+    },
+
+    '/tables/kp': {
+      title: 'KP Tables',
+      component: <KpTables currentChart={currentChart} />
+    },
 
     // Add more path mappings as components are developed
   };
