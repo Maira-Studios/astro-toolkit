@@ -122,13 +122,38 @@ const ChartSidebar = ({ inSidebar = false, onChartCreated = null }) => {
                         <p className="text-gray-600">{t('No saved charts yet.')}</p>
                     ) : (
                         <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50"><tr><th>{t('Name')}</th><th>{t('Date')}</th><th>{t('Actions')}</th></tr></thead>
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {t('Active')}
+                                    </th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {t('Name')}
+                                    </th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {t('Date & Time')}
+                                    </th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {t('Actions')}
+                                    </th>
+                                </tr>
+                            </thead>
+
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {charts.map(c => (
+                                {charts.map((c) => (
                                     <tr key={c.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-2 text-sm">{c.name}</td>
-                                        <td className="px-4 py-2 text-sm">{c.date} {c.time}</td>
-                                        <td className="px-4 py-2 text-sm space-x-2">
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                            {currentChart.id === c.id && (
+                                                <span className="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
+                                                    {t('Active')}
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm">{c.name}</td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                            {c.date} {c.time}
+                                        </td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm space-x-2">
                                             <button
                                                 onClick={() => loadChart(c.id)}
                                                 className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
@@ -136,7 +161,7 @@ const ChartSidebar = ({ inSidebar = false, onChartCreated = null }) => {
                                                 {t('Load')}
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(c.id)}
+                                                onClick={() => deleteChart(c.id)}
                                                 className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
                                             >
                                                 {t('Delete')}
@@ -145,6 +170,7 @@ const ChartSidebar = ({ inSidebar = false, onChartCreated = null }) => {
                                     </tr>
                                 ))}
                             </tbody>
+
 
                         </table>
                     )}

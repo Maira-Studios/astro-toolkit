@@ -5,7 +5,7 @@ const ChartContext = createContext();
 
 export const ChartProvider = ({ children }) => {
     const [charts, setCharts] = useState([]);
-    const [currentChart, setCurrentChart] = useState({ vedic: null, kp: null });
+    const [currentChart, setCurrentChart] = useState({ id: null, vedic: null, kp: null });
 
     const addChart = (chartData) => {
         const id = uuidv4();
@@ -19,7 +19,7 @@ export const ChartProvider = ({ children }) => {
             ? charts.find((c) => c.id === chartOrId)
             : chartOrId;
         if (chart) {
-            setCurrentChart({ vedic: chart.vedicData, kp: chart.kpData });
+            setCurrentChart({ id: chart.id, vedic: chart.vedicData, kp: chart.kpData });
         }
     };
 

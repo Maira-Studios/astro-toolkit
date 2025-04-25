@@ -64,7 +64,7 @@ const navigationItems = [
 
 const App = () => {
   const { t } = useTranslation();
-  const [activePath, setActivePath] = useState('/astro-vastu/hit-calculator');
+  const [activePath, setActivePath] = useState('/new-chart');
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [rightSidebarContent, setRightSidebarContent] = useState(null);
