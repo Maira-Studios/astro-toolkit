@@ -1,24 +1,30 @@
 // src/pages/astro-vastu/HitCalculator.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import ResultsTable from '../../components/results/ResultsTable';
 import { useChartContext } from '../../context/ChartContext';
+import TabSelector from '../../components/common/TabSelector';
 
 const HitCalculator = ({ navigateToNewChart = null }) => {
     const { t } = useTranslation();
     const { currentChart } = useChartContext();
-
     const [relationshipType, setRelationshipType] = useState('planet-house');
 
-    console.log("Current Chart:", currentChart);
-    console.log("Vedic Data Planets:", currentChart.kp.kpPositions);
-    console.log("Vedic Data Houses:", currentChart.kp.houseCusps);
+    // Log current chart data to debug
+    useEffect(() => {
+        if (currentChart && currentChart.kp) {
+            console.log("Current Chart:", currentChart);
+        }
+    }, [currentChart]);
 
-    const handleRelationshipTypeChange = (e) => {
-        setRelationshipType(e.target.value);
-    };
+    // Define relationship tabs
+    const relationshipTabs = [
+        { id: 'planet-house', label: t('Planet → House') },
+        { id: 'planet-planet', label: t('Planet → Planet') }
+    ];
 
-    if (!currentChart) {
+    // If no chart is selected
+    if (!currentChart || !currentChart.id) {
         return (
             <div className="text-center p-8">
                 <h2 className="text-xl font-bold text-gray-700 mb-4">
@@ -37,8 +43,8 @@ const HitCalculator = ({ navigateToNewChart = null }) => {
         );
     }
 
-    // If planets or houses are missing, show loading or error state
-    if (!currentChart.kp.kpPositions || !currentChart.kp.houseCusps ||
+    // If chart data is loading or missing
+    if (!currentChart.kp || !currentChart.kp.kpPositions || !currentChart.kp.houseCusps ||
         currentChart.kp.kpPositions.length === 0 || currentChart.kp.houseCusps.length === 0) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -68,6 +74,7 @@ const HitCalculator = ({ navigateToNewChart = null }) => {
 
     return (
         <div className="flex flex-col h-full">
+            {/* Header with chart info and controls */}
             <div className="mb-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-medium">
@@ -75,14 +82,12 @@ const HitCalculator = ({ navigateToNewChart = null }) => {
                     </h2>
 
                     <div className="flex space-x-4">
-                        <select
-                            value={relationshipType}
-                            onChange={handleRelationshipTypeChange}
-                            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="planet-house">{t('Planet → House')}</option>
-                            <option value="planet-planet">{t('Planet → Planet')}</option>
-                        </select>
+                        {/* Tab selector for relationship type */}
+                        <TabSelector
+                            tabs={relationshipTabs}
+                            activeTab={relationshipType}
+                            onTabChange={setRelationshipType}
+                        />
                     </div>
                 </div>
             </div>
