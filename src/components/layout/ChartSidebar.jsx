@@ -163,7 +163,7 @@ const ChartSidebar = ({ inSidebar = false, onChartCreated = null }) => {
                                                 {t('Load')}
                                             </button>
                                             <button
-                                                onClick={() => deleteChart(c.id)}
+                                                onClick={() => handleDelete(c.id)}
                                                 className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
                                             >
                                                 {t('Delete')}

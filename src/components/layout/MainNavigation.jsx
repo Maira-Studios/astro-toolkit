@@ -16,7 +16,8 @@ import {
 
 const MainNavigation = ({ items, activePath, onNavigate, collapsed, toggleCollapse }) => {
     const [expandedMenus, setExpandedMenus] = useState({
-        'astro-vastu': true // Start with Astro Vastu expanded
+        'astro-vastu': true, // Start with Astro Vastu expanded
+        'tables': true
     });
 
     const toggleSubmenu = (itemId) => {

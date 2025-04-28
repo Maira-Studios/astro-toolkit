@@ -34,19 +34,16 @@ const VastuCalculator = ({ openSidebar, hideButtons = false, navigateToNewChart 
     // Update planet names and positions when language changes or current chart changes
     useEffect(() => {
         if (currentChart) {
-            // Extract planet and house data from the chart
-            if (currentChart.vedicData?.planets) {
-                // Apply translation to planet names
-                const translatedPlanets = currentChart.vedicData.planets.map(planet => ({
-                    ...planet,
-                    name: t(`planets.${planet.id}`)
-                }));
-                setPlanets(translatedPlanets);
+            if (currentChart.vedic?.planets) {
+                setPlanets(currentChart.vedic.planets.map(p => ({
+                    ...p,
+                    name: t(`planets.${p.id}`)
+                })));
+            }
+            if (currentChart.vedic?.houses) {
+                setHouses(currentChart.vedic.houses);
             }
 
-            if (currentChart.vedicData?.houses) {
-                setHouses(currentChart.vedicData.houses);
-            }
         }
     }, [currentChart, i18n.language, t]);
 
