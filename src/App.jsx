@@ -121,18 +121,43 @@ const App = () => {
 
     '/astro-vastu/hit-calculator': {
       title: 'Hit Calculator',
-      component: <HitCalculator />
+      component: <HitCalculator openChartSidebar={() =>
+        openRightSidebar({
+          title: "New Chart",
+          content: <ChartSidebar inSidebar={true} onChartCreated={closeRightSidebar} />
+        }
+
+        )
+      } />
     },
 
     // Tables - Parashari
     '/tables/parashari': {
       title: 'Parashari Tables',
-      component: <ParashariTables />
+      component: (
+        <ParashariTables
+          openChartSidebar={() =>
+            openRightSidebar({
+              title: "New Chart",
+              content: <ChartSidebar inSidebar={true} onChartCreated={closeRightSidebar} />
+            }
+
+            )
+          }
+        />
+      )
     },
 
     '/tables/kp': {
       title: 'KP Tables',
-      component: <KpTables />
+      component: <KpTables openChartSidebar={() =>
+        openRightSidebar({
+          title: "New Chart",
+          content: <ChartSidebar inSidebar={true} onChartCreated={closeRightSidebar} />
+        }
+
+        )
+      } />
     },
 
     // Add more path mappings as components are developed
