@@ -18,15 +18,13 @@ const AstroUtils = {
 
     // Parse position from "DDD-MM" format to decimal degrees
     parsePosition: (position) => {
-        if (!position || typeof position !== 'string') return 0;
-
-        const parts = position.split('-');
-        if (parts.length !== 2) return 0;
-
-        const degrees = parseInt(parts[0], 10);
-        const minutes = parseInt(parts[1], 10);
-
-        return degrees + (minutes / 60);
+        // If it’s already numeric, just use it
+        if (typeof position === 'number') {
+            return position;
+        }
+        // Otherwise try to coerce to a float (in case you ever pass a string like "123.45")
+        const num = parseFloat(position);
+        return isNaN(num) ? 0 : num;
     },
 
     // Format decimal degrees to "DDD-MM" format

@@ -49,15 +49,20 @@ const HitCell = ({ hit, isVipreet = false, changeStatus = null, sourcePlanet, ta
 
     // Determine tooltip content
     const getTooltipContent = () => {
+        console.log(
+            'Tooltip values →',
+            'source:', sourcePlanet.position, typeof sourcePlanet.position,
+            'target:', targetPosition, typeof targetPosition
+        );
         const angleDiff = AstroUtils.calculateAngleDifference(sourcePlanet.position, targetPosition);
 
         // Format for beyond 180 degrees hits
         if (hit.type === 'beyond180') {
-            return `${sourcePlanet.name} (${AstroUtils.formatDegree(sourcePlanet.position)}) - ${targetName} (${AstroUtils.formatDegree(targetPosition)}) = ${angleDiff.toFixed(2)}°\n${t('tooltips.noHitBecause')} ${t('tooltips.noAspect')} >180° ± ${t('hits.orb')} (${angleDiff.toFixed(2)}°)`;
+            return `${sourcePlanet.name} (${sourcePlanet.position.toFixed(2)}°) - ${targetName} (${targetPosition.toFixed(2)}°) = ${angleDiff.toFixed(2)}°\n…`;
         }
 
         // Format for regular hits
-        const diffText = `${sourcePlanet.name} (${AstroUtils.formatDegree(sourcePlanet.position)}) - ${targetName} (${AstroUtils.formatDegree(targetPosition)}) = ${angleDiff.toFixed(2)}°`;
+        const diffText = `${sourcePlanet.name} (${sourcePlanet.position.toFixed(2)}°) - ${targetName} (${targetPosition.toFixed(2)}°) = ${angleDiff.toFixed(2)}°`;
 
         let hitTypeText;
         if (hit.type === 'positive') {

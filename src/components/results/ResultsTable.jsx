@@ -90,7 +90,7 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                             <tr key={`planet-${planet.id}`}>
                                 <td className="sticky left-0 bg-white px-4 py-2 border font-medium whitespace-nowrap">
                                     {planet.name}<br />
-                                    <span className="text-xs text-gray-500">{AstroUtils.formatDegree(planet.position)}</span>
+                                    <span className="text-xs text-gray-500"> {planet.position.toFixed(2)}°</span>
                                 </td>
                                 {houses.map(house => {
                                     // Skip hits for a planet on its own cusp
@@ -173,7 +173,7 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                         {planets.filter(p => p.id !== 'asc').map(targetPlanet => (
                             <th key={`target-${targetPlanet.id}`} className="px-4 py-2 border text-center whitespace-nowrap">
                                 {targetPlanet.name}<br />
-                                <span className="text-xs text-gray-500">{AstroUtils.formatDegree(targetPlanet.position)}</span>
+                                <span className="text-xs text-gray-500"> {targetPlanet.position.toFixed(2)}°</span>
                             </th>
                         ))}
                     </tr>
@@ -183,7 +183,7 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                         <tr key={`source-${sourcePlanet.id}`}>
                             <td className="sticky left-0 bg-white px-4 py-2 border font-medium whitespace-nowrap">
                                 {sourcePlanet.name}<br />
-                                <span className="text-xs text-gray-500">{AstroUtils.formatDegree(sourcePlanet.position)}</span>
+                                <span className="text-xs text-gray-500"> {sourcePlanet.position.toFixed(2)}°</span>
                             </td>
                             {planets.filter(p => p.id !== 'asc').map(targetPlanet => {
                                 // Skip self-relationships

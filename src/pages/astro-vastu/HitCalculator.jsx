@@ -3,12 +3,19 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ResultsTable from '../../components/results/ResultsTable';
 import { useChartContext } from '../../context/ChartContext';
+import TabSelector from "../../components/common/TabSelector"
 
 const HitCalculator = ({ navigateToNewChart = null }) => {
     const { t } = useTranslation();
     const { currentChart } = useChartContext();
 
     const [relationshipType, setRelationshipType] = useState('planet-house');
+
+    // Define the two view tabs
+    const tabs = [
+        { id: 'planet-house', label: t('Planet → House') },
+        { id: 'planet-planet', label: t('Planet → Planet') },
+    ];
 
     // Debug current chart
     console.log("HitCalculator - Current Chart:", currentChart);
@@ -60,24 +67,7 @@ const HitCalculator = ({ navigateToNewChart = null }) => {
     // Debug KP data structure
     console.log("KP Data:", currentChart.kp);
 
-    // Format position to ensure it's in the correct format (e.g., "057-08")
-    const formatPosition = (position) => {
-        // If the position is already in the right format, return it
-        if (typeof position === 'string' && /^\d{3}-\d{2}$/.test(position)) {
-            return position;
-        }
 
-        // If it's a number, convert to the right format
-        if (typeof position === 'number') {
-            const degrees = Math.floor(position);
-            const minutes = Math.floor((position - degrees) * 60);
-            return `${degrees.toString().padStart(3, '0')}-${minutes.toString().padStart(2, '0')}`;
-        }
-
-        // If we can't format it, return a default value
-        console.warn("Invalid position format:", position);
-        return "000-00";
-    };
 
     // Extract and format planets data
     const planets = Array.isArray(currentChart.kp.kpPositions)
@@ -87,13 +77,13 @@ const HitCalculator = ({ navigateToNewChart = null }) => {
             // Format planet name for display
             const planetName = t(`${planetId}`);
             // Ensure position is in the right format
-            const formattedPosition = formatPosition(planet.compoundDegree);
+            //const formattedPosition = formatPosition(planet.compoundDegree);
 
             return {
                 id: planetId,
                 planet: planetId, // Ensure planet property exists
                 name: planetName,
-                position: formattedPosition,
+                position: planet.compoundDegree,
                 // canHit is now handled in ResultsTable
             };
         })
@@ -140,30 +130,34 @@ const HitCalculator = ({ navigateToNewChart = null }) => {
                         {t('Analyzing')}: {currentChart.name || t('Unnamed Chart')}
                     </h2>
 
-                    <div className="flex space-x-4">
-                        <select
-                            value={relationshipType}
-                            onChange={handleRelationshipTypeChange}
-                            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="planet-house">{t('Planet → House')}</option>
-                            <option value="planet-planet">{t('Planet → Planet')}</option>
-                        </select>
-                    </div>
+
                 </div>
             </div>
 
-            {/* Results Table */}
-            <div className="bg-white shadow rounded-lg overflow-hidden flex-1">
-                <ResultsTable
-                    planets={planets}
-                    houses={houses}
-                    mode="current"
-                    relationshipType={relationshipType}
-                />
+            {/* Results Table with anchored tabs */}
+            <div className="bg-white shadow rounded-lg overflow-hidden flex-1 relative">
+                {/* Anchor tabs at top-left */}
+                <div className="absolute top-0 left-0 px-4 pt-4">
+                    <TabSelector
+                        tabs={tabs}
+                        activeTab={relationshipType}
+                        onTabChange={setRelationshipType}
+                    />
+                </div>
+
+                {/* Add padding so table doesn’t overlap tabs */}
+                <div className="pt-16">
+                    <ResultsTable
+                        planets={planets}
+                        houses={houses}
+                        mode="current"
+                        relationshipType={relationshipType}
+                    />
+                </div>
             </div>
         </div>
     );
+
 };
 
 export default HitCalculator;

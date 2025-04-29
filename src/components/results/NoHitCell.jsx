@@ -12,17 +12,32 @@ const NoHitCell = ({ changeStatus, sourcePlanet, targetPosition, targetName }) =
     } else if (changeStatus === 'worsened') {
         bgColor = 'bg-red-100';
     }
-
     // Determine tooltip content
     const getTooltipContent = () => {
+        // 1. Compute the raw angle difference
+        const angleDiff = AstroUtils.calculateAngleDifference(
+            sourcePlanet.position,
+            targetPosition
+        );
 
-        const angleDiff = AstroUtils.calculateAngleDifference(sourcePlanet.position, targetPosition);
+        // 2. Normalize both values to numbers
+        const srcVal = typeof sourcePlanet.position === 'number'
+            ? sourcePlanet.position
+            : AstroUtils.parsePosition(sourcePlanet.position);
+        const tgtVal = typeof targetPosition === 'number'
+            ? targetPosition
+            : AstroUtils.parsePosition(targetPosition);
 
-        // Format for regular NA hits
-        const diffText = `${sourcePlanet.name} (${AstroUtils.formatDegree(sourcePlanet.position)}) - ${targetName} (${AstroUtils.formatDegree(targetPosition)}) = ${angleDiff.toFixed(2)}°`;
+        // 3. Build the diff text with two-decimal formatting
+        const diffText = `${sourcePlanet.name} (${srcVal.toFixed(2)}°) - ` +
+            `${targetName} (${tgtVal.toFixed(2)}°) = ` +
+            `${angleDiff.toFixed(2)}°`;
 
-        let reasonText = `No hit because ${angleDiff.toFixed(2)}° does not match any aspect pattern`;
+        // 4. Reason for no hit
+        const reasonText = `No hit because ${angleDiff.toFixed(2)}° ` +
+            `does not match any aspect pattern`;
 
+        // 5. Include comparison info if present
         let additionalInfo = '';
         if (changeStatus) {
             additionalInfo = changeStatus === 'improved'
@@ -32,6 +47,7 @@ const NoHitCell = ({ changeStatus, sourcePlanet, targetPosition, targetName }) =
 
         return `${diffText}\n${reasonText}${additionalInfo}`;
     };
+
 
     return (
         <td
