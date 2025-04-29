@@ -11,7 +11,7 @@ export const ChartProvider = ({ children }) => {
         const id = uuidv4();
         const newChart = { id, ...chartData };
         setCharts((prev) => [...prev, newChart]);
-        //console.log(newChart);
+        console.log(newChart);
         return newChart;
     };
 
@@ -20,6 +20,7 @@ export const ChartProvider = ({ children }) => {
             ? charts.find((c) => c.id === chartOrId)
             : chartOrId;
         if (chart) {
+            console.log(chart);
             setCurrentChart({ id: chart.id, name: chart.name, vedic: chart.vedicData, kp: chart.kpData });
         }
     };

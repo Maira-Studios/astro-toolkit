@@ -9,7 +9,12 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
     const [showTooltip, setShowTooltip] = useState(null);
 
     // Filter out non-hitting planets
-    const hittingPlanets = planets.filter(planet => planet.canHit);
+    // Filter out non-hitting planets
+    const hittingPlanets = planets.map(planet => ({
+        ...planet,
+        canHit: planet.canHit !== undefined ? planet.canHit :
+            (planet.id !== 'rahu' && planet.id !== 'ketu' && planet.planet !== 'rahu' && planet.planet !== 'ketu')
+    })).filter(planet => planet.canHit);
 
     // Function to determine hit type between planet and house or planet
     const determineHit = (sourcePlanet, targetPosition) => {
@@ -75,7 +80,7 @@ const ResultsTable = ({ planets, houses, mode, originalPlanets = [], relationshi
                             {houses.map(house => (
                                 <th key={`house-${house.number}`} className="px-4 py-2 border text-center whitespace-nowrap">
                                     Cusp {house.number}<br />
-                                    <span className="text-xs text-gray-500">{AstroUtils.formatDegree(house.position)}</span>
+                                    <span className="text-xs text-gray-500">{house.position.toFixed(2)}°</span>
                                 </th>
                             ))}
                         </tr>
